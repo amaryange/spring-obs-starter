@@ -1,0 +1,8 @@
+  __pycache__/
+  *.py[cod]
+  .env
+  CLAUDE.md
+  .venv/
+  dist/
+  *.egg-info/
+  docker/observability/prometheus/data/
