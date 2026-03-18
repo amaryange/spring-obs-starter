@@ -56,7 +56,24 @@ services:
       retries: 10
     restart: unless-stopped
 
+  mimir:
+    image: grafana/mimir:2.15.0
+    container_name: mimir
+    ports:
+      - "9009:9009"   # HTTP API + remote_write + OTLP
+    volumes:
+      - ./observability/mimir/mimir.yml:/etc/mimir/mimir.yml:ro
+      - mimir_data:/data/mimir
+    command: -config.file=/etc/mimir/mimir.yml
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9009/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
 volumes:
   prometheus_data:
   loki_data:
   tempo_data:
+  mimir_data:
