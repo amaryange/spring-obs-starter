@@ -35,13 +35,36 @@ services:
       retries: 5
     restart: unless-stopped
 
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.122.0
+    container_name: otel-collector
+    ports:
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+      - "13133:13133" # Health check
+    volumes:
+      - ./observability/otel-collector/otel-collector.yml:/etc/otel/config.yml:ro
+    command: --config=/etc/otel/config.yml
+    depends_on:
+      prometheus:
+        condition: service_healthy
+      loki:
+        condition: service_healthy
+      tempo:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:13133/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
   tempo:
     image: grafana/tempo:2.7.2
     container_name: tempo
     ports:
       - "3200:3200"   # HTTP API
-      - "4317:4317"   # OTLP gRPC
-      - "4318:4318"   # OTLP HTTP
+      # 4317/4318 exposés uniquement en interne — le Collector les utilise via le réseau Docker
     volumes:
       - ./observability/tempo/tempo.yml:/etc/tempo/tempo.yml:ro
       - tempo_data:/var/tempo
@@ -100,8 +123,7 @@ services:
     container_name: jaeger
     ports:
       - "16686:16686"  # UI
-      - "4319:4317"    # OTLP gRPC (4317 déjà pris par Tempo)
-      - "4320:4318"    # OTLP HTTP (4318 déjà pris par Tempo)
+      # OTLP gRPC/HTTP internes — le Collector envoie via réseau Docker
     environment:
       - COLLECTOR_OTLP_ENABLED=true
     healthcheck:
