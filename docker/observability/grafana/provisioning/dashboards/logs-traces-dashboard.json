@@ -1,0 +1,174 @@
+{
+  "uid": "spring-logs-traces",
+  "title": "Spring Boot — Logs & Traces",
+  "tags": ["spring-boot", "logs", "traces"],
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "graphTooltip": 1,
+  "time": { "from": "now-1h", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "service",
+        "label": "Service",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "definition": "label_values(jvm_memory_used_bytes, application)",
+        "query": {
+          "query": "label_values(jvm_memory_used_bytes, application)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 2,
+        "sort": 1,
+        "multi": false,
+        "includeAll": false,
+        "current": {}
+      },
+      {
+        "name": "level",
+        "label": "Level",
+        "type": "custom",
+        "query": "ERROR,WARN,INFO,DEBUG",
+        "options": [
+          { "text": "All", "value": "$__all", "selected": true },
+          { "text": "ERROR", "value": "ERROR" },
+          { "text": "WARN", "value": "WARN" },
+          { "text": "INFO", "value": "INFO" },
+          { "text": "DEBUG", "value": "DEBUG" }
+        ],
+        "multi": true,
+        "includeAll": true,
+        "current": {}
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "row",
+      "title": "Overview",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 }
+    },
+    {
+      "id": 2,
+      "title": "Log Rate par niveau",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 16, "x": 0, "y": 1 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": { "lineWidth": 1, "fillOpacity": 10 }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "ERROR" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "WARN" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "INFO" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "blue", "mode": "fixed" } }]
+          }
+        ]
+      },
+      "options": {
+        "tooltip": { "mode": "multi" },
+        "legend": { "displayMode": "list", "placement": "bottom", "calcs": ["sum"] }
+      },
+      "targets": [
+        {
+          "expr": "sum(rate({service_name=\"$service\"} | json | severity_text=~\"$level\" [$__auto])) by (severity_text)",
+          "legendFormat": "{{severity_text}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Distribution par niveau",
+      "type": "piechart",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 1 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Value #ERROR" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Value #WARN" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Value #INFO" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "blue", "mode": "fixed" } }]
+          }
+        ]
+      },
+      "options": {
+        "pieType": "donut",
+        "legend": { "displayMode": "list", "placement": "right" },
+        "tooltip": { "mode": "single" }
+      },
+      "targets": [
+        {
+          "expr": "sum(count_over_time({service_name=\"$service\"} | json | severity_text=\"ERROR\" [$__range]))",
+          "legendFormat": "ERROR",
+          "refId": "A",
+          "instant": true
+        },
+        {
+          "expr": "sum(count_over_time({service_name=\"$service\"} | json | severity_text=\"WARN\" [$__range]))",
+          "legendFormat": "WARN",
+          "refId": "B",
+          "instant": true
+        },
+        {
+          "expr": "sum(count_over_time({service_name=\"$service\"} | json | severity_text=\"INFO\" [$__range]))",
+          "legendFormat": "INFO",
+          "refId": "C",
+          "instant": true
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "row",
+      "title": "Log Stream",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 9 }
+    },
+    {
+      "id": 5,
+      "title": "Logs — cliquer sur un trace_id pour ouvrir Tempo",
+      "type": "logs",
+      "gridPos": { "h": 20, "w": 24, "x": 0, "y": 10 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showLabels": false,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
+      "targets": [
+        {
+          "expr": "{service_name=\"$service\", severity_text=~\"$level\"}",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ]
+    }
+  ]
+}

@@ -10,6 +10,11 @@ management:
   metrics:
     tags:
       application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http:
+          server:
+            requests: true
   tracing:
     sampling:
       probability: ${OTEL_SAMPLING_PROBABILITY:1.0}
