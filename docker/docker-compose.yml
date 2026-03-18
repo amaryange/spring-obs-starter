@@ -56,6 +56,18 @@ services:
       retries: 10
     restart: unless-stopped
 
+  zipkin:
+    image: openzipkin/zipkin:3.5
+    container_name: zipkin
+    ports:
+      - "9411:9411"   # UI + API (JSON v2)
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9411/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
   jaeger:
     image: jaegertracing/jaeger:2.4.0
     container_name: jaeger
