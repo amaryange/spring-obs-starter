@@ -56,6 +56,22 @@ services:
       retries: 10
     restart: unless-stopped
 
+  jaeger:
+    image: jaegertracing/jaeger:2.4.0
+    container_name: jaeger
+    ports:
+      - "16686:16686"  # UI
+      - "4319:4317"    # OTLP gRPC (4317 déjà pris par Tempo)
+      - "4320:4318"    # OTLP HTTP (4318 déjà pris par Tempo)
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:16686"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
   mimir:
     image: grafana/mimir:2.15.0
     container_name: mimir
