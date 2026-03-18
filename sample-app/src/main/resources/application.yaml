@@ -1,6 +1,6 @@
 spring:
   application:
-    name: spring-obs-sample
+    name: ${SPRING_APPLICATION_NAME:spring-obs-sample}
 
 management:
   endpoints:
