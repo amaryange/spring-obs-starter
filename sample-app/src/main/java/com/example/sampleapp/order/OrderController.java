@@ -1,18 +1,16 @@
 package com.example.sampleapp.order;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * V1 order endpoints — stable, no breaking changes.
+ * V2 adds enriched response fields (currency, createdAt, amountWithTax).
+ */
 @RestController
-@RequestMapping("/api/orders")
+@RequestMapping("/api/v1/orders")
 public class OrderController {
-
-    private static final Logger log = LoggerFactory.getLogger(OrderController.class);
 
     private final OrderService orderService;
 
@@ -38,9 +36,4 @@ public class OrderController {
         return orderService.processSlowOrder();
     }
 
-    @ExceptionHandler(OrderNotFoundException.class)
-    public ProblemDetail handleNotFound(OrderNotFoundException ex) {
-        log.warn("Returning 404 — {}", ex.getMessage());
-        return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
-    }
 }
