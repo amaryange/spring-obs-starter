@@ -49,7 +49,6 @@ class ProjectConfig:
     environment: TargetEnvironment
     database: Database
     build_tool: BuildTool = BuildTool.MAVEN
-    extras: list[Extra] = field(default_factory=list)
     spring_boot_version: str = "4.0.3"
 
     # ------------------------------------------------------------------
@@ -173,9 +172,3 @@ class ProjectConfig:
             case _:
                 return "changeme"
 
-    # ------------------------------------------------------------------
-    # Extras helpers
-    # ------------------------------------------------------------------
-
-    def has_extra(self, extra_value: str) -> bool:
-        return any(e.value == extra_value for e in self.extras)

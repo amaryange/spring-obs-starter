@@ -107,39 +107,6 @@
         <!-- ================================================================
              Extras
              ================================================================ -->
-{% if config.has_extra('security') or config.has_extra('jwt') %}
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-security</artifactId>
-        </dependency>
-{% endif %}
-{% if config.has_extra('jwt') %}
-        <!-- JWT — JJWT 0.12.x (not managed by Spring Boot BOM) -->
-        <dependency>
-            <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt-api</artifactId>
-            <version>0.12.6</version>
-        </dependency>
-        <dependency>
-            <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt-impl</artifactId>
-            <version>0.12.6</version>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt-jackson</artifactId>
-            <version>0.12.6</version>
-            <scope>runtime</scope>
-        </dependency>
-{% endif %}
-{% if config.has_extra('kafka') %}
-        <dependency>
-            <groupId>org.springframework.kafka</groupId>
-            <artifactId>spring-kafka</artifactId>
-        </dependency>
-{% endif %}
-
         <!-- ================================================================
              Test
              ================================================================ -->
@@ -153,13 +120,6 @@
             <artifactId>spring-boot-starter-opentelemetry-test</artifactId>
             <scope>test</scope>
         </dependency>
-{% if config.has_extra('security') or config.has_extra('jwt') %}
-        <dependency>
-            <groupId>org.springframework.security</groupId>
-            <artifactId>spring-security-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-{% endif %}
 
     </dependencies>
 

@@ -99,15 +99,6 @@ def create(service_name: str) -> None:
         ],
     ).ask()
 
-    extras: list[Extra] = questionary.checkbox(
-        "Extras? (space to select, enter to confirm)",
-        choices=[
-            questionary.Choice("Spring Security", Extra.SECURITY),
-            questionary.Choice("JWT skeleton (implies Security)", Extra.JWT),
-            questionary.Choice("Kafka", Extra.KAFKA),
-        ],
-    ).ask() or []
-
     default_pkg = f"com.example.{service_name.lower().replace('-', '').replace('_', '')}"
     base_package: str = questionary.text(
         "Base package?",
@@ -127,7 +118,6 @@ def create(service_name: str) -> None:
         environment=environment,
         database=database,
         build_tool=build_tool,
-        extras=extras,
     )
 
     output_dir = Path.cwd() / config.artifact_id

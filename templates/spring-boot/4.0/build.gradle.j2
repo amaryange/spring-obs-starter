@@ -52,27 +52,9 @@ dependencies {
 {% endif %}
 {% endif %}
 
-{% if config.has_extra('security') or config.has_extra('jwt') %}
-    // =========================================================================
-    // Extras
-    // =========================================================================
-    implementation 'org.springframework.boot:spring-boot-starter-security'
-{% endif %}
-{% if config.has_extra('jwt') %}
-    implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
-    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
-    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
-{% endif %}
-{% if config.has_extra('kafka') %}
-    implementation 'org.springframework.kafka:spring-kafka'
-{% endif %}
-
     // =========================================================================
     // Test
     // =========================================================================
     testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-opentelemetry-test'
-{% if config.has_extra('security') or config.has_extra('jwt') %}
-    testImplementation 'org.springframework.security:spring-security-test'
-{% endif %}
 }
