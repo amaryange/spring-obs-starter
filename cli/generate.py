@@ -35,9 +35,37 @@ from cli.validators import validate_package, validate_service_name, validate_out
 console = Console()
 
 
-@click.group()
-def main() -> None:
+_BANNER = """
+[bold cyan]┌─────────────────────────────────────────────────────────────────┐[/bold cyan]
+[bold cyan]│[/bold cyan]                                                                 [bold cyan]│[/bold cyan]
+[bold cyan]│[/bold cyan]   [bold white] ___  ___  ___         [green]█▀█ █▄▄ █▀[/green]                         [bold cyan]│[/bold cyan]
+[bold cyan]│[/bold cyan]   [bold white]/ __|| _ )||_ )  [cyan]───[/cyan]  [green]█▄█ █▄█ ▄█[/green]  [bold white]Spring Boot 4 + OTel[/bold white]   [bold cyan]│[/bold cyan]
+[bold cyan]│[/bold cyan]   [bold white]\__ \| _ \ / /         [green]Observability Starter[/green]              [bold cyan]│[/bold cyan]
+[bold cyan]│[/bold cyan]   [bold white]|___/|___//___|                                            [bold cyan]│[/bold cyan]
+[bold cyan]│[/bold cyan]                                                                 [bold cyan]│[/bold cyan]
+[bold cyan]│[/bold cyan]   [dim]Traces · Metrics · Logs — correlated out of the box[/dim]         [bold cyan]│[/bold cyan]
+[bold cyan]│[/bold cyan]                                                                 [bold cyan]│[/bold cyan]
+[bold cyan]│[/bold cyan]   [bold]Author :[/bold] [cyan]amaryange[/cyan]           [bold]Web :[/bold] [link=https://amarycode.dev]amarycode.dev[/link]          [bold cyan]│[/bold cyan]
+[bold cyan]│[/bold cyan]                                                                 [bold cyan]│[/bold cyan]
+[bold cyan]└─────────────────────────────────────────────────────────────────┘[/bold cyan]
+"""
+
+
+@click.group(invoke_without_command=True)
+@click.pass_context
+def main(ctx: click.Context) -> None:
     """spring-obs-starter — Spring Boot 4 + OTel observability generator."""
+    if ctx.invoked_subcommand is None:
+        console.print(_BANNER)
+        console.print("  [bold]Commands:[/bold]")
+        console.print("  [cyan]sbo create[/cyan] <service-name>   Generate a new project")
+        console.print("  [cyan]sbo init-obs[/cyan]                Generate shared obs stack")
+        console.print("  [cyan]sbo add[/cyan] [PATH...]           Add OTel to existing project(s)")
+        console.print()
+        console.print("  Run [cyan]sbo <command> --help[/cyan] for details.")
+        console.print()
+    else:
+        console.print(_BANNER)
 
 
 @main.command()
