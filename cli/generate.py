@@ -8,6 +8,7 @@ from rich.text import Text
 
 from cli.generator import ProjectGenerator
 from cli.models import (
+    BuildTool,
     Database,
     Extra,
     JavaVersion,
@@ -50,6 +51,15 @@ def create(service_name: str) -> None:
     # ------------------------------------------------------------------
     # Interactive questions
     # ------------------------------------------------------------------
+
+    build_tool: BuildTool = questionary.select(
+        "Build tool?",
+        choices=[
+            questionary.Choice("Maven (recommended)", BuildTool.MAVEN),
+            questionary.Choice("Gradle — Kotlin DSL", BuildTool.GRADLE_KOTLIN),
+            questionary.Choice("Gradle — Groovy DSL", BuildTool.GRADLE_GROOVY),
+        ],
+    ).ask()
 
     java_version: JavaVersion = questionary.select(
         "Java version?",
@@ -116,6 +126,7 @@ def create(service_name: str) -> None:
         trace_backend=trace_backend,
         environment=environment,
         database=database,
+        build_tool=build_tool,
         extras=extras,
     )
 

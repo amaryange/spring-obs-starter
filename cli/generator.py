@@ -51,12 +51,22 @@ class ProjectGenerator:
         cls = config.class_name
         files: list[tuple[str, str]] = []
 
+        # --- Build descriptor ---
+        if config.use_maven:
+            files.append(("spring-boot/4.0/pom.xml.j2", "pom.xml"))
+        elif config.use_gradle_kotlin:
+            files += [
+                ("spring-boot/4.0/build.gradle.kts.j2", "build.gradle.kts"),
+                ("spring-boot/4.0/settings.gradle.kts.j2", "settings.gradle.kts"),
+            ]
+        else:  # Gradle Groovy
+            files += [
+                ("spring-boot/4.0/build.gradle.j2", "build.gradle"),
+                ("spring-boot/4.0/settings.gradle.j2", "settings.gradle"),
+            ]
+
         # --- Spring Boot application ---
         files += [
-            (
-                "spring-boot/4.0/pom.xml.j2",
-                "pom.xml",
-            ),
             (
                 "spring-boot/4.0/application.yml.j2",
                 "src/main/resources/application.yml",

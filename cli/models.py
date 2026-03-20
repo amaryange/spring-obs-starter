@@ -28,6 +28,12 @@ class Database(str, Enum):
     NONE = "none"
 
 
+class BuildTool(str, Enum):
+    MAVEN = "maven"
+    GRADLE_KOTLIN = "gradle-kotlin"
+    GRADLE_GROOVY = "gradle-groovy"
+
+
 class Extra(str, Enum):
     JWT = "jwt"
     KAFKA = "kafka"
@@ -42,6 +48,7 @@ class ProjectConfig:
     trace_backend: TraceBackend
     environment: TargetEnvironment
     database: Database
+    build_tool: BuildTool = BuildTool.MAVEN
     extras: list[Extra] = field(default_factory=list)
     spring_boot_version: str = "4.0.3"
 
@@ -63,6 +70,36 @@ class ProjectConfig:
     def package_path(self) -> str:
         """Base package as a filesystem path (dots → slashes)."""
         return self.base_package.replace(".", "/")
+
+    # ------------------------------------------------------------------
+    # Build tool helpers
+    # ------------------------------------------------------------------
+
+    @property
+    def use_maven(self) -> bool:
+        return self.build_tool == BuildTool.MAVEN
+
+    @property
+    def use_gradle(self) -> bool:
+        return self.build_tool in (BuildTool.GRADLE_KOTLIN, BuildTool.GRADLE_GROOVY)
+
+    @property
+    def use_gradle_kotlin(self) -> bool:
+        return self.build_tool == BuildTool.GRADLE_KOTLIN
+
+    @property
+    def build_command(self) -> str:
+        """Run command for the README."""
+        if self.use_maven:
+            return "./mvnw spring-boot:run"
+        return "./gradlew bootRun"
+
+    @property
+    def wrapper_setup(self) -> str:
+        """One-time wrapper generation command."""
+        if self.use_maven:
+            return "mvn wrapper:wrapper"
+        return "gradle wrapper"
 
     # ------------------------------------------------------------------
     # Trace backend flags
