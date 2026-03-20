@@ -1,0 +1,86 @@
+services:
+  app:
+    build:
+      context: ..
+    container_name: {{ config.artifact_id }}
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    environment:
+      - SPRING_APPLICATION_NAME={{ config.artifact_id }}
+      # otel-collector is provided by the shared obs stack (sbo init-obs)
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+      - OTEL_SAMPLING_PROBABILITY=1.0
+{% if config.database.value == 'postgresql' %}
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/{{ config.artifact_id | replace('-', '_') }}
+      - DB_USERNAME=app
+      - DB_PASSWORD=changeme
+{% elif config.database.value == 'mysql' %}
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/{{ config.artifact_id | replace('-', '_') }}?useSSL=false&serverTimezone=UTC
+      - DB_USERNAME=app
+      - DB_PASSWORD=changeme
+{% endif %}
+    depends_on:
+{% if config.database.value == 'postgresql' %}
+      postgres:
+        condition: service_healthy
+{% elif config.database.value == 'mysql' %}
+      mysql:
+        condition: service_healthy
+{% endif %}
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - obs-network
+      - default
+
+{% if config.database.value == 'postgresql' %}
+  postgres:
+    image: postgres:17-alpine
+    container_name: {{ config.artifact_id }}-postgres
+    environment:
+      - POSTGRES_DB={{ config.artifact_id | replace('-', '_') }}
+      - POSTGRES_USER=app
+      - POSTGRES_PASSWORD=changeme
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d {{ config.artifact_id | replace('-', '_') }}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+{% elif config.database.value == 'mysql' %}
+  mysql:
+    image: mysql:9.0
+    container_name: {{ config.artifact_id }}-mysql
+    environment:
+      - MYSQL_DATABASE={{ config.artifact_id | replace('-', '_') }}
+      - MYSQL_USER=app
+      - MYSQL_PASSWORD=changeme
+      - MYSQL_ROOT_PASSWORD=root-changeme
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "app", "-pchangeme"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+{% endif %}
+volumes:
+{% if config.database.value == 'postgresql' %}
+  postgres_data:
+{% elif config.database.value == 'mysql' %}
+  mysql_data:
+{% endif %}
+
+networks:
+  obs-network:
+    external: true
+    name: obs-network

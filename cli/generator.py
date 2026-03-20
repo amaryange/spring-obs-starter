@@ -85,75 +85,151 @@ class ProjectGenerator:
             ),
         ]
 
-        # Database migration skeleton
-        if config.use_database and config.database != Database.ORACLE:
+        # --- Database migration skeleton ---
+        if config.use_database:
             files.append((
                 f"spring-boot/4.0/db/V1__init.{config.database.value}.sql",
-                "src/main/resources/db/migration/V1__init.sql",
-            ))
-        elif config.database == Database.ORACLE:
-            files.append((
-                "spring-boot/4.0/db/V1__init.oracle.sql",
                 "src/main/resources/db/migration/V1__init.sql",
             ))
 
         # --- Docker Compose stack ---
         if config.use_docker:
-            files += [
-                (
-                    "docker/docker-compose.yml.j2",
-                    "docker/docker-compose.yml",
-                ),
-                (
-                    "docker/observability/otel-collector/otel-collector.yml.j2",
-                    "docker/observability/otel-collector/otel-collector.yml",
-                ),
-                *(
-                    [(
-                        "docker/observability/prometheus/prometheus.yml.j2",
-                        "docker/observability/prometheus/prometheus.yml",
-                    )]
-                    if config.use_prometheus else
-                    [(
-                        "docker/observability/mimir/mimir.yml",
-                        "docker/observability/mimir/mimir.yml",
-                    )]
-                ),
-                (
-                    "docker/observability/loki/loki.yml",
-                    "docker/observability/loki/loki.yml",
-                ),
-                (
-                    "docker/observability/grafana/provisioning/datasources/datasources.yaml.j2",
-                    "docker/observability/grafana/provisioning/datasources/datasources.yml",
-                ),
-                (
-                    "docker/observability/grafana/provisioning/dashboards/dashboards.yml",
-                    "docker/observability/grafana/provisioning/dashboards/dashboards.yml",
-                ),
-                # Static dashboard JSONs — copied as-is
-                (
-                    "docker/observability/grafana/provisioning/dashboards/jvm-dashboard.json",
-                    "docker/observability/grafana/provisioning/dashboards/jvm-dashboard.json",
-                ),
-                (
-                    "docker/observability/grafana/provisioning/dashboards/http-dashboard.json",
-                    "docker/observability/grafana/provisioning/dashboards/http-dashboard.json",
-                ),
-                (
-                    "docker/observability/grafana/provisioning/dashboards/logs-traces-dashboard.json",
-                    "docker/observability/grafana/provisioning/dashboards/logs-traces-dashboard.json",
-                ),
-            ]
-
-            if config.use_tempo:
+            if config.is_standalone:
+                files += self._standalone_docker_files(config)
+            else:
                 files.append((
-                    "docker/observability/tempo/tempo.yml.j2",
-                    "docker/observability/tempo/tempo.yml",
+                    "docker/docker-compose.service.yml.j2",
+                    "docker/docker-compose.yml",
                 ))
 
         # --- README ---
         files.append(("README.md.j2", "README.md"))
+
+        return files
+
+    def _standalone_docker_files(self, config: ProjectConfig) -> list[tuple[str, str]]:
+        """All files needed for the standalone (app + full obs stack) compose mode."""
+        files: list[tuple[str, str]] = [
+            (
+                "docker/docker-compose.standalone.yml.j2",
+                "docker/docker-compose.yml",
+            ),
+            (
+                "docker/observability/otel-collector/otel-collector.yml.j2",
+                "docker/observability/otel-collector/otel-collector.yml",
+            ),
+            (
+                "docker/observability/loki/loki.yml",
+                "docker/observability/loki/loki.yml",
+            ),
+            (
+                "docker/observability/grafana/provisioning/datasources/datasources.yaml.j2",
+                "docker/observability/grafana/provisioning/datasources/datasources.yml",
+            ),
+            (
+                "docker/observability/grafana/provisioning/dashboards/dashboards.yml",
+                "docker/observability/grafana/provisioning/dashboards/dashboards.yml",
+            ),
+            (
+                "docker/observability/grafana/provisioning/dashboards/jvm-dashboard.json",
+                "docker/observability/grafana/provisioning/dashboards/jvm-dashboard.json",
+            ),
+            (
+                "docker/observability/grafana/provisioning/dashboards/http-dashboard.json",
+                "docker/observability/grafana/provisioning/dashboards/http-dashboard.json",
+            ),
+            (
+                "docker/observability/grafana/provisioning/dashboards/logs-traces-dashboard.json",
+                "docker/observability/grafana/provisioning/dashboards/logs-traces-dashboard.json",
+            ),
+        ]
+
+        if config.use_prometheus:
+            files.append((
+                "docker/observability/prometheus/prometheus.yml.j2",
+                "docker/observability/prometheus/prometheus.yml",
+            ))
+        else:
+            files.append((
+                "docker/observability/mimir/mimir.yml",
+                "docker/observability/mimir/mimir.yml",
+            ))
+
+        if config.use_tempo:
+            files.append((
+                "docker/observability/tempo/tempo.yml.j2",
+                "docker/observability/tempo/tempo.yml",
+            ))
+
+        return files
+
+    # ------------------------------------------------------------------
+    # init-obs: shared observability stack
+    # ------------------------------------------------------------------
+
+    def generate_obs_stack(self, config: "ProjectConfig", output_dir: Path) -> None:
+        """Generate a standalone shared obs stack (no app service)."""
+        output_dir.mkdir(parents=True, exist_ok=True)
+        for template_path, output_path in self._obs_manifest(config):
+            full_output = output_dir / output_path
+            full_output.parent.mkdir(parents=True, exist_ok=True)
+            if template_path.endswith(".j2"):
+                self._render(config, template_path, full_output)
+            else:
+                self._copy(template_path, full_output)
+
+    def _obs_manifest(self, config: "ProjectConfig") -> list[tuple[str, str]]:
+        files: list[tuple[str, str]] = [
+            (
+                "docker/docker-compose.obs.yml.j2",
+                "docker-compose.yml",
+            ),
+            (
+                "docker/observability/otel-collector/otel-collector.yml.j2",
+                "observability/otel-collector/otel-collector.yml",
+            ),
+            (
+                "docker/observability/loki/loki.yml",
+                "observability/loki/loki.yml",
+            ),
+            (
+                "docker/observability/grafana/provisioning/datasources/datasources.yaml.j2",
+                "observability/grafana/provisioning/datasources/datasources.yml",
+            ),
+            (
+                "docker/observability/grafana/provisioning/dashboards/dashboards.yml",
+                "observability/grafana/provisioning/dashboards/dashboards.yml",
+            ),
+            (
+                "docker/observability/grafana/provisioning/dashboards/jvm-dashboard.json",
+                "observability/grafana/provisioning/dashboards/jvm-dashboard.json",
+            ),
+            (
+                "docker/observability/grafana/provisioning/dashboards/http-dashboard.json",
+                "observability/grafana/provisioning/dashboards/http-dashboard.json",
+            ),
+            (
+                "docker/observability/grafana/provisioning/dashboards/logs-traces-dashboard.json",
+                "observability/grafana/provisioning/dashboards/logs-traces-dashboard.json",
+            ),
+        ]
+
+        if config.use_prometheus:
+            files.append((
+                "docker/observability/prometheus/prometheus.yml.j2",
+                "observability/prometheus/prometheus.yml",
+            ))
+        else:
+            files.append((
+                "docker/observability/mimir/mimir.yml",
+                "observability/mimir/mimir.yml",
+            ))
+
+        if config.use_tempo:
+            files.append((
+                "docker/observability/tempo/tempo.yml.j2",
+                "observability/tempo/tempo.yml",
+            ))
 
         return files
 

@@ -28,6 +28,11 @@ class Database(str, Enum):
     NONE = "none"
 
 
+class DeploymentMode(str, Enum):
+    STANDALONE = "standalone"      # app + obs stack complet dans un seul compose
+    MULTI_SERVICE = "multi-service"  # app seule, se connecte à un obs stack partagé
+
+
 class MetricsBackend(str, Enum):
     PROMETHEUS = "prometheus"
     MIMIR = "mimir"
@@ -55,6 +60,7 @@ class ProjectConfig:
     database: Database
     build_tool: BuildTool = BuildTool.MAVEN
     metrics_backend: MetricsBackend = MetricsBackend.PROMETHEUS
+    deployment_mode: DeploymentMode = DeploymentMode.STANDALONE
     spring_boot_version: str = "4.0.3"
 
     # ------------------------------------------------------------------
@@ -75,6 +81,18 @@ class ProjectConfig:
     def package_path(self) -> str:
         """Base package as a filesystem path (dots → slashes)."""
         return self.base_package.replace(".", "/")
+
+    # ------------------------------------------------------------------
+    # Deployment mode helpers
+    # ------------------------------------------------------------------
+
+    @property
+    def is_standalone(self) -> bool:
+        return self.deployment_mode == DeploymentMode.STANDALONE
+
+    @property
+    def is_multi_service(self) -> bool:
+        return self.deployment_mode == DeploymentMode.MULTI_SERVICE
 
     # ------------------------------------------------------------------
     # Metrics backend helpers
@@ -155,6 +173,28 @@ class ProjectConfig:
     # ------------------------------------------------------------------
     # Database helpers
     # ------------------------------------------------------------------
+
+    # ------------------------------------------------------------------
+    # Factory for obs-only stack (init-obs command)
+    # ------------------------------------------------------------------
+
+    @classmethod
+    def for_obs_stack(
+        cls,
+        trace_backend: "TraceBackend",
+        metrics_backend: "MetricsBackend",
+    ) -> "ProjectConfig":
+        """Minimal config used by init-obs — only trace/metrics backend matter."""
+        return cls(
+            service_name="obs-stack",
+            base_package="com.example",
+            java_version=JavaVersion.V21,
+            trace_backend=trace_backend,
+            environment=TargetEnvironment.DOCKER_COMPOSE,
+            database=Database.NONE,
+            metrics_backend=metrics_backend,
+            deployment_mode=DeploymentMode.STANDALONE,
+        )
 
     @property
     def use_database(self) -> bool:
