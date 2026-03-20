@@ -23,7 +23,7 @@ dev = [
 ]
 
 [project.scripts]
-sb-obs = "cli.generate:main"
+sbo = "cli.generate:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["cli"]
