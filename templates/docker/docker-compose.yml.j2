@@ -1,0 +1,227 @@
+services:
+  app:
+    build:
+      context: ..
+    container_name: {{ config.artifact_id }}
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_APPLICATION_NAME={{ config.artifact_id }}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+      - OTEL_SAMPLING_PROBABILITY=1.0
+{% if config.database.value == 'postgresql' %}
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/{{ config.artifact_id | replace('-', '_') }}
+      - DB_USERNAME=app
+      - DB_PASSWORD=changeme
+{% elif config.database.value == 'mysql' %}
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/{{ config.artifact_id | replace('-', '_') }}?useSSL=false&serverTimezone=UTC
+      - DB_USERNAME=app
+      - DB_PASSWORD=changeme
+{% endif %}
+    depends_on:
+      otel-collector:
+        condition: service_healthy
+{% if config.database.value == 'postgresql' %}
+      postgres:
+        condition: service_healthy
+{% elif config.database.value == 'mysql' %}
+      mysql:
+        condition: service_healthy
+{% endif %}
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+{% if config.database.value == 'postgresql' %}
+  postgres:
+    image: postgres:17-alpine
+    container_name: postgres
+    environment:
+      - POSTGRES_DB={{ config.artifact_id | replace('-', '_') }}
+      - POSTGRES_USER=app
+      - POSTGRES_PASSWORD=changeme
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d {{ config.artifact_id | replace('-', '_') }}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+{% elif config.database.value == 'mysql' %}
+  mysql:
+    image: mysql:9.0
+    container_name: mysql
+    environment:
+      - MYSQL_DATABASE={{ config.artifact_id | replace('-', '_') }}
+      - MYSQL_USER=app
+      - MYSQL_PASSWORD=changeme
+      - MYSQL_ROOT_PASSWORD=root-changeme
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "app", "-pchangeme"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+{% endif %}
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.122.0
+    container_name: otel-collector
+    ports:
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+      - "13133:13133" # Health check
+    volumes:
+      - ./observability/otel-collector/otel-collector.yml:/etc/otel/config.yml:ro
+    command: --config=/etc/otel/config.yml
+    depends_on:
+      prometheus:
+        condition: service_healthy
+      loki:
+        condition: service_healthy
+{% if config.use_tempo %}
+      tempo:
+        condition: service_healthy
+{% endif %}
+    healthcheck:
+      test: ["CMD", "/otelcol-contrib", "--version"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v3.2.1
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.enable-lifecycle"
+      - "--web.enable-remote-write-receiver"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  loki:
+    image: grafana/loki:3.4.2
+    container_name: loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./observability/loki/loki.yml:/etc/loki/loki.yml:ro
+      - loki_data:/loki
+    command: -config.file=/etc/loki/loki.yml
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3100/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+{% if config.use_tempo %}
+  tempo:
+    image: grafana/tempo:2.7.2
+    container_name: tempo
+    ports:
+      - "3200:3200"
+    volumes:
+      - ./observability/tempo/tempo.yml:/etc/tempo/tempo.yml:ro
+      - tempo_data:/var/tempo
+    command: -config.file=/etc/tempo/tempo.yml
+    depends_on:
+      prometheus:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3200/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+{% endif %}
+{% if config.use_jaeger %}
+  jaeger:
+    image: jaegertracing/jaeger:2.4.0
+    container_name: jaeger
+    ports:
+      - "16686:16686"
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:16686"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+{% endif %}
+{% if config.use_zipkin %}
+  zipkin:
+    image: openzipkin/zipkin:3.5
+    container_name: zipkin
+    ports:
+      - "9411:9411"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9411/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+{% endif %}
+  grafana:
+    image: grafana/grafana:11.6.0
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_FEATURE_TOGGLES_ENABLE=traceqlEditor traceToMetrics
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      prometheus:
+        condition: service_healthy
+      loki:
+        condition: service_healthy
+{% if config.use_tempo %}
+      tempo:
+        condition: service_healthy
+{% endif %}
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  prometheus_data:
+  loki_data:
+{% if config.use_tempo %}
+  tempo_data:
+{% endif %}
+  grafana_data:
+{% if config.database.value == 'postgresql' %}
+  postgres_data:
+{% elif config.database.value == 'mysql' %}
+  mysql_data:
+{% endif %}

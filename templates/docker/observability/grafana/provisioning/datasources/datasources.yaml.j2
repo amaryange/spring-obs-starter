@@ -1,0 +1,63 @@
+apiVersion: 1
+
+datasources:
+  # --- Metrics ---
+
+  - name: Prometheus
+    type: prometheus
+    uid: prometheus
+    url: http://prometheus:9090
+    isDefault: true
+    jsonData:
+      timeInterval: 15s
+
+  # --- Logs ---
+
+  - name: Loki
+    type: loki
+    uid: loki
+    url: http://loki:3100
+    jsonData:
+      derivedFields:
+        - name: TraceID
+          matcherRegex: '"trace_id":"(\w+)"'
+          url: "$${__value.raw}"
+{% if config.use_tempo %}
+          datasourceUid: tempo
+{% elif config.use_jaeger %}
+          datasourceUid: jaeger
+{% endif %}
+
+  # --- Traces ---
+{% if config.use_tempo %}
+  - name: Tempo
+    type: tempo
+    uid: tempo
+    url: http://tempo:3200
+    jsonData:
+      tracesToLogsV2:
+        datasourceUid: loki
+        spanStartTimeShift: "-1m"
+        spanEndTimeShift: "1m"
+        filterByTraceID: true
+      serviceMap:
+        datasourceUid: prometheus
+      nodeGraph:
+        enabled: true
+{% endif %}
+{% if config.use_jaeger %}
+  - name: Jaeger
+    type: jaeger
+    uid: jaeger
+    url: http://jaeger:16686
+    jsonData:
+      tracesToLogsV2:
+        datasourceUid: loki
+        filterByTraceID: true
+{% endif %}
+{% if config.use_zipkin %}
+  - name: Zipkin
+    type: zipkin
+    uid: zipkin
+    url: http://zipkin:9411
+{% endif %}

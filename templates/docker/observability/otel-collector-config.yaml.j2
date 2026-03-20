@@ -1,0 +1,72 @@
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 512
+    spike_limit_mib: 128
+
+  batch:
+    timeout: 5s
+    send_batch_size: 1024
+
+exporters:
+  # --- Traces ---
+{% if config.use_tempo %}
+  otlp/tempo:
+    endpoint: tempo:4317
+    tls:
+      insecure: true
+{% endif %}
+{% if config.use_jaeger %}
+  otlp/jaeger:
+    endpoint: jaeger:4317
+    tls:
+      insecure: true
+{% endif %}
+{% if config.use_zipkin %}
+  zipkin:
+    endpoint: http://zipkin:9411/api/v2/spans
+{% endif %}
+
+  # --- Metrics ---
+  prometheusremotewrite/prometheus:
+    endpoint: http://prometheus:9090/api/v1/write
+
+  # --- Logs ---
+  otlphttp/loki:
+    endpoint: http://loki:3100/otlp
+    tls:
+      insecure: true
+
+  # --- Debug (dev only) ---
+  debug:
+    verbosity: basic
+
+service:
+  extensions: [health_check]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [{% if config.use_tempo %}otlp/tempo{% endif %}{% if config.use_jaeger %}{% if config.use_tempo %}, {% endif %}otlp/jaeger{% endif %}{% if config.use_zipkin %}{% if config.use_tempo or config.use_jaeger %}, {% endif %}zipkin{% endif %}, debug]
+
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [prometheusremotewrite/prometheus, debug]
+
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [otlphttp/loki, debug]

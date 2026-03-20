@@ -1,0 +1,144 @@
+from dataclasses import dataclass, field
+from enum import Enum
+
+
+class JavaVersion(str, Enum):
+    V17 = "17"
+    V21 = "21"
+
+
+class TraceBackend(str, Enum):
+    TEMPO = "tempo"
+    JAEGER = "jaeger"
+    ZIPKIN = "zipkin"
+    TEMPO_JAEGER = "tempo+jaeger"
+
+
+class TargetEnvironment(str, Enum):
+    DOCKER_COMPOSE = "docker-compose"
+    KUBERNETES = "kubernetes"
+    BOTH = "both"
+
+
+class Database(str, Enum):
+    POSTGRESQL = "postgresql"
+    MYSQL = "mysql"
+    ORACLE = "oracle"
+    H2 = "h2"
+    NONE = "none"
+
+
+class Extra(str, Enum):
+    JWT = "jwt"
+    KAFKA = "kafka"
+    SECURITY = "security"
+
+
+@dataclass
+class ProjectConfig:
+    service_name: str
+    base_package: str
+    java_version: JavaVersion
+    trace_backend: TraceBackend
+    environment: TargetEnvironment
+    database: Database
+    extras: list[Extra] = field(default_factory=list)
+    spring_boot_version: str = "4.0.3"
+
+    # ------------------------------------------------------------------
+    # Derived identifiers
+    # ------------------------------------------------------------------
+
+    @property
+    def artifact_id(self) -> str:
+        """Kebab-case, suitable for Maven artifactId and directory name."""
+        return self.service_name.lower().replace("_", "-")
+
+    @property
+    def class_name(self) -> str:
+        """PascalCase, suitable for Java class name prefix."""
+        return "".join(part.capitalize() for part in self.artifact_id.split("-"))
+
+    @property
+    def package_path(self) -> str:
+        """Base package as a filesystem path (dots → slashes)."""
+        return self.base_package.replace(".", "/")
+
+    # ------------------------------------------------------------------
+    # Trace backend flags
+    # ------------------------------------------------------------------
+
+    @property
+    def use_tempo(self) -> bool:
+        return self.trace_backend in (TraceBackend.TEMPO, TraceBackend.TEMPO_JAEGER)
+
+    @property
+    def use_jaeger(self) -> bool:
+        return self.trace_backend in (TraceBackend.JAEGER, TraceBackend.TEMPO_JAEGER)
+
+    @property
+    def use_zipkin(self) -> bool:
+        return self.trace_backend == TraceBackend.ZIPKIN
+
+    # ------------------------------------------------------------------
+    # Environment flags
+    # ------------------------------------------------------------------
+
+    @property
+    def use_docker(self) -> bool:
+        return self.environment in (TargetEnvironment.DOCKER_COMPOSE, TargetEnvironment.BOTH)
+
+    @property
+    def use_kubernetes(self) -> bool:
+        return self.environment in (TargetEnvironment.KUBERNETES, TargetEnvironment.BOTH)
+
+    # ------------------------------------------------------------------
+    # Database helpers
+    # ------------------------------------------------------------------
+
+    @property
+    def use_database(self) -> bool:
+        return self.database != Database.NONE
+
+    @property
+    def datasource_url(self) -> str:
+        """Spring Boot datasource URL with ${...} placeholders for env overrides."""
+        db_name = self.artifact_id.replace("-", "_")
+        match self.database:
+            case Database.POSTGRESQL:
+                return f"jdbc:postgresql://${{DB_HOST:localhost}}:${{DB_PORT:5432}}/${{DB_NAME:{db_name}}}"
+            case Database.MYSQL:
+                return f"jdbc:mysql://${{DB_HOST:localhost}}:${{DB_PORT:3306}}/${{DB_NAME:{db_name}}}?useSSL=false&serverTimezone=UTC"
+            case Database.ORACLE:
+                return f"jdbc:oracle:thin:@${{DB_HOST:localhost}}:${{DB_PORT:1521}}/${{DB_SERVICE:xe}}"
+            case Database.H2:
+                return f"jdbc:h2:mem:{db_name};MODE=PostgreSQL;DB_CLOSE_DELAY=-1"
+            case _:
+                return ""
+
+    @property
+    def db_default_user(self) -> str:
+        match self.database:
+            case Database.POSTGRESQL:
+                return "postgres"
+            case Database.MYSQL:
+                return "root"
+            case Database.ORACLE:
+                return "system"
+            case _:
+                return "sa"
+
+    @property
+    def db_default_password(self) -> str:
+        match self.database:
+            case Database.H2:
+                return ""
+            case _:
+                return "changeme"
+
+    # ------------------------------------------------------------------
+    # Extras helpers
+    # ------------------------------------------------------------------
+
+    def has_extra(self, extra_value: str) -> bool:
+        return any(e.value == extra_value for e in self.extras)

@@ -1,0 +1,12 @@
+package {{ config.base_package }};
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class {{ config.class_name }}Application {
+
+    public static void main(String[] args) {
+        SpringApplication.run({{ config.class_name }}Application.class, args);
+    }
+}

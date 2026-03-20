@@ -1,0 +1,44 @@
+spring:
+  application:
+    name: ${SPRING_APPLICATION_NAME:{{ config.artifact_id }}}
+{% if config.use_database %}
+  datasource:
+    url: "{{ config.datasource_url }}"
+    username: ${DB_USERNAME:{{ config.db_default_user }}}
+    password: ${DB_PASSWORD:{{ config.db_default_password }}}
+  jpa:
+    hibernate:
+      ddl-auto: validate   # Flyway owns the schema — Hibernate only validates
+    open-in-view: false
+  flyway:
+    enabled: true
+{% endif %}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus, metrics
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http:
+          server:
+            requests: true
+  tracing:
+    sampling:
+      probability: ${OTEL_SAMPLING_PROBABILITY:1.0}
+  otlp:
+    metrics:
+      export:
+        url: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4318}/v1/metrics
+  opentelemetry:
+    tracing:
+      export:
+        otlp:
+          endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4318}/v1/traces
+    logging:
+      export:
+        otlp:
+          endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4318}/v1/logs
