@@ -105,15 +105,15 @@ class ProjectGenerator:
                     "docker/docker-compose.yml",
                 ),
                 (
-                    "docker/observability/otel-collector-config.yaml.j2",
+                    "docker/observability/otel-collector/otel-collector.yml.j2",
                     "docker/observability/otel-collector/otel-collector.yml",
                 ),
                 (
-                    "docker/observability/prometheus.yml.j2",
+                    "docker/observability/prometheus/prometheus.yml.j2",
                     "docker/observability/prometheus/prometheus.yml",
                 ),
                 (
-                    "docker/observability/loki.yml",
+                    "docker/observability/loki/loki.yml",
                     "docker/observability/loki/loki.yml",
                 ),
                 (
@@ -141,7 +141,7 @@ class ProjectGenerator:
 
             if config.use_tempo:
                 files.append((
-                    "docker/observability/tempo.yml",
+                    "docker/observability/tempo/tempo.yml",
                     "docker/observability/tempo/tempo.yml",
                 ))
 
