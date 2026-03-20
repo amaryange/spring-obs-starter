@@ -24,8 +24,11 @@ docker compose up -d
 {% endif %}
 
 ```bash
-# Run the app (add your DB if needed)
-./mvnw spring-boot:run
+# Generate the build wrapper (once)
+{{ config.wrapper_setup }}
+
+# Run the app
+{{ config.build_command }}
 ```
 {% if config.use_docker %}
 ## Endpoints

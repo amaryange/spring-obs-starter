@@ -29,7 +29,11 @@ metrics_generator:
   storage:
     path: /var/tempo/generator/wal
     remote_write:
-      - url: http://prometheus:9090/api/v1/write
+      - url: {{ config.metrics_remote_write_url }}
+{% if config.use_mimir %}
+        headers:
+          X-Scope-OrgID: dev
+{% endif %}
         send_exemplars: true
 
 overrides:

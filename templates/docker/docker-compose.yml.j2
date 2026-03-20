@@ -82,8 +82,13 @@ services:
       - ./observability/otel-collector/otel-collector.yml:/etc/otel/config.yml:ro
     command: --config=/etc/otel/config.yml
     depends_on:
+{% if config.use_prometheus %}
       prometheus:
         condition: service_healthy
+{% else %}
+      mimir:
+        condition: service_healthy
+{% endif %}
       loki:
         condition: service_healthy
 {% if config.use_tempo %}
@@ -97,6 +102,7 @@ services:
       retries: 5
     restart: unless-stopped
 
+{% if config.use_prometheus %}
   prometheus:
     image: prom/prometheus:v3.2.1
     container_name: prometheus
@@ -116,6 +122,23 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
+{% else %}
+  mimir:
+    image: grafana/mimir:2.15.0
+    container_name: mimir
+    ports:
+      - "9009:9009"
+    volumes:
+      - ./observability/mimir/mimir.yml:/etc/mimir/mimir.yml:ro
+      - mimir_data:/data/mimir
+    command: -config.file=/etc/mimir/mimir.yml
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9009/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+{% endif %}
 
   loki:
     image: grafana/loki:3.4.2
@@ -144,8 +167,13 @@ services:
       - tempo_data:/var/tempo
     command: -config.file=/etc/tempo/tempo.yml
     depends_on:
+{% if config.use_prometheus %}
       prometheus:
         condition: service_healthy
+{% else %}
+      mimir:
+        condition: service_healthy
+{% endif %}
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3200/ready"]
       interval: 10s
@@ -198,8 +226,13 @@ services:
       - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
       - grafana_data:/var/lib/grafana
     depends_on:
+{% if config.use_prometheus %}
       prometheus:
         condition: service_healthy
+{% else %}
+      mimir:
+        condition: service_healthy
+{% endif %}
       loki:
         condition: service_healthy
 {% if config.use_tempo %}
@@ -214,7 +247,11 @@ services:
     restart: unless-stopped
 
 volumes:
+{% if config.use_prometheus %}
   prometheus_data:
+{% else %}
+  mimir_data:
+{% endif %}
   loki_data:
 {% if config.use_tempo %}
   tempo_data:

@@ -1,0 +1,41 @@
+# Mimir monolithic mode — dev/local only
+# For production, use microservices mode with object storage (S3/GCS)
+target: all
+
+server:
+  http_listen_port: 9009
+  grpc_listen_port: 9095
+  log_level: warn
+
+common:
+  storage:
+    backend: filesystem
+    filesystem:
+      dir: /data/mimir/blocks
+
+blocks_storage:
+  tsdb:
+    dir: /data/mimir/tsdb
+  bucket_store:
+    sync_dir: /data/mimir/tsdb-sync
+
+compactor:
+  data_dir: /data/mimir/compactor
+
+ruler_storage:
+  backend: filesystem
+  filesystem:
+    dir: /data/mimir/rules
+
+ingester:
+  ring:
+    replication_factor: 1
+
+store_gateway:
+  sharding_ring:
+    replication_factor: 1
+
+# Accept out-of-order samples (useful in dev)
+limits:
+  out_of_order_time_window: 5m
+  native_histograms_ingestion_enabled: true

@@ -28,6 +28,11 @@ class Database(str, Enum):
     NONE = "none"
 
 
+class MetricsBackend(str, Enum):
+    PROMETHEUS = "prometheus"
+    MIMIR = "mimir"
+
+
 class BuildTool(str, Enum):
     MAVEN = "maven"
     GRADLE_KOTLIN = "gradle-kotlin"
@@ -49,6 +54,7 @@ class ProjectConfig:
     environment: TargetEnvironment
     database: Database
     build_tool: BuildTool = BuildTool.MAVEN
+    metrics_backend: MetricsBackend = MetricsBackend.PROMETHEUS
     spring_boot_version: str = "4.0.3"
 
     # ------------------------------------------------------------------
@@ -69,6 +75,24 @@ class ProjectConfig:
     def package_path(self) -> str:
         """Base package as a filesystem path (dots → slashes)."""
         return self.base_package.replace(".", "/")
+
+    # ------------------------------------------------------------------
+    # Metrics backend helpers
+    # ------------------------------------------------------------------
+
+    @property
+    def use_prometheus(self) -> bool:
+        return self.metrics_backend == MetricsBackend.PROMETHEUS
+
+    @property
+    def use_mimir(self) -> bool:
+        return self.metrics_backend == MetricsBackend.MIMIR
+
+    @property
+    def metrics_remote_write_url(self) -> str:
+        if self.use_mimir:
+            return "http://mimir:9009/api/v1/push"
+        return "http://prometheus:9090/api/v1/write"
 
     # ------------------------------------------------------------------
     # Build tool helpers

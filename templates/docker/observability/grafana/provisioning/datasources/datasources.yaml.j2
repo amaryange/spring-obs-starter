@@ -3,6 +3,7 @@ apiVersion: 1
 datasources:
   # --- Metrics ---
 
+{% if config.use_prometheus %}
   - name: Prometheus
     type: prometheus
     uid: prometheus
@@ -10,6 +11,18 @@ datasources:
     isDefault: true
     jsonData:
       timeInterval: 15s
+{% else %}
+  - name: Mimir
+    type: prometheus
+    uid: prometheus
+    url: http://mimir:9009/prometheus
+    isDefault: true
+    jsonData:
+      timeInterval: 15s
+      httpHeaderName1: "X-Scope-OrgID"
+    secureJsonData:
+      httpHeaderValue1: "dev"
+{% endif %}
 
   # --- Logs ---
 

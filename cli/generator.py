@@ -3,7 +3,7 @@ from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
-from cli.models import ProjectConfig, TargetEnvironment, Database
+from cli.models import ProjectConfig, TargetEnvironment, Database, MetricsBackend
 
 # Resolved at import time — templates/ lives next to cli/ in the repo root
 TEMPLATES_DIR = Path(__file__).parent.parent / "templates"
@@ -108,9 +108,16 @@ class ProjectGenerator:
                     "docker/observability/otel-collector/otel-collector.yml.j2",
                     "docker/observability/otel-collector/otel-collector.yml",
                 ),
-                (
-                    "docker/observability/prometheus/prometheus.yml.j2",
-                    "docker/observability/prometheus/prometheus.yml",
+                *(
+                    [(
+                        "docker/observability/prometheus/prometheus.yml.j2",
+                        "docker/observability/prometheus/prometheus.yml",
+                    )]
+                    if config.use_prometheus else
+                    [(
+                        "docker/observability/mimir/mimir.yml",
+                        "docker/observability/mimir/mimir.yml",
+                    )]
                 ),
                 (
                     "docker/observability/loki/loki.yml",
@@ -141,7 +148,7 @@ class ProjectGenerator:
 
             if config.use_tempo:
                 files.append((
-                    "docker/observability/tempo/tempo.yml",
+                    "docker/observability/tempo/tempo.yml.j2",
                     "docker/observability/tempo/tempo.yml",
                 ))
 

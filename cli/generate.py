@@ -12,6 +12,7 @@ from cli.models import (
     Database,
     Extra,
     JavaVersion,
+    MetricsBackend,
     ProjectConfig,
     TargetEnvironment,
     TraceBackend,
@@ -79,6 +80,14 @@ def create(service_name: str) -> None:
         ],
     ).ask()
 
+    metrics_backend: MetricsBackend = questionary.select(
+        "Metrics backend?",
+        choices=[
+            questionary.Choice("Prometheus (recommended)", MetricsBackend.PROMETHEUS),
+            questionary.Choice("Mimir (long-term storage, Prometheus-compatible)", MetricsBackend.MIMIR),
+        ],
+    ).ask()
+
     environment: TargetEnvironment = questionary.select(
         "Target environment?",
         choices=[
@@ -118,6 +127,7 @@ def create(service_name: str) -> None:
         environment=environment,
         database=database,
         build_tool=build_tool,
+        metrics_backend=metrics_backend,
     )
 
     output_dir = Path.cwd() / config.artifact_id
