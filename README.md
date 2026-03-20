@@ -53,17 +53,30 @@ The `trace_id` is automatically injected into every log line — giving you dire
 
 ### Installation
 
-```bash
-pip install spring-obs-starter
-```
-
-Or from source:
+**One-liner (Linux / macOS):**
 
 ```bash
-git clone https://github.com/amaryange/spring-obs-starter.git
-cd spring-obs-starter
-pip install -e .
+curl -fsSL https://raw.githubusercontent.com/amaryange/spring-obs-starter/main/install.sh | bash
 ```
+
+**Manual download:**
+
+Download the binary for your platform from [GitHub Releases](https://github.com/amaryange/spring-obs-starter/releases/latest):
+
+| Platform | Binary |
+|----------|--------|
+| Linux x86_64 | `sbo-linux-x86_64` |
+| Linux arm64 | `sbo-linux-arm64` |
+| macOS x86_64 | `sbo-macos-x86_64` |
+| macOS arm64 (M1/M2/M3) | `sbo-macos-arm64` |
+| Windows x86_64 | `sbo-windows-x86_64.exe` |
+
+```bash
+chmod +x sbo-linux-x86_64
+sudo mv sbo-linux-x86_64 /usr/local/bin/sbo
+```
+
+> No Python, no pip, no JDK required — `sbo` is a standalone binary.
 
 Verify:
 
@@ -337,17 +350,30 @@ Le `trace_id` est automatiquement injecté dans chaque ligne de log — ce qui p
 
 ### Installation
 
-```bash
-pip install spring-obs-starter
-```
-
-Ou depuis les sources :
+**One-liner (Linux / macOS) :**
 
 ```bash
-git clone https://github.com/amaryange/spring-obs-starter.git
-cd spring-obs-starter
-pip install -e .
+curl -fsSL https://raw.githubusercontent.com/amaryange/spring-obs-starter/main/install.sh | bash
 ```
+
+**Téléchargement manuel :**
+
+Télécharger le binaire depuis [GitHub Releases](https://github.com/amaryange/spring-obs-starter/releases/latest) :
+
+| Plateforme | Binaire |
+|------------|---------|
+| Linux x86_64 | `sbo-linux-x86_64` |
+| Linux arm64 | `sbo-linux-arm64` |
+| macOS x86_64 | `sbo-macos-x86_64` |
+| macOS arm64 (M1/M2/M3) | `sbo-macos-arm64` |
+| Windows x86_64 | `sbo-windows-x86_64.exe` |
+
+```bash
+chmod +x sbo-linux-x86_64
+sudo mv sbo-linux-x86_64 /usr/local/bin/sbo
+```
+
+> Aucune dépendance Python, pip ou JDK — `sbo` est un binaire standalone.
 
 Vérification :
 

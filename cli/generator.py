@@ -1,12 +1,23 @@
 import shutil
+import sys
 from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
 from cli.models import ProjectConfig, TargetEnvironment, Database, MetricsBackend
 
-# Resolved at import time — templates/ lives next to cli/ in the repo root
-TEMPLATES_DIR = Path(__file__).parent.parent / "templates"
+
+def _get_templates_dir() -> Path:
+    """
+    Resolve the templates directory whether running from source or as a
+    PyInstaller one-file binary (sys._MEIPASS points to the temp bundle dir).
+    """
+    if hasattr(sys, "_MEIPASS"):
+        return Path(sys._MEIPASS) / "templates"
+    return Path(__file__).parent.parent / "templates"
+
+
+TEMPLATES_DIR = _get_templates_dir()
 
 
 class ProjectGenerator:
