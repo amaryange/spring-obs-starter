@@ -33,8 +33,10 @@ datasources:
     jsonData:
       derivedFields:
         - name: TraceID
-          matcherRegex: '"trace_id":"(\w+)"'
+          matcherType: label
+          matcherRegex: trace_id
           url: "$${__value.raw}"
+          urlDisplayLabel: "View Trace"
 {% if config.use_tempo %}
           datasourceUid: tempo
 {% elif config.use_jaeger %}

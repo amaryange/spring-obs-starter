@@ -1,3 +1,5 @@
+name: {{ config.artifact_id }}
+
 services:
   app:
     build:
@@ -19,6 +21,7 @@ services:
       - DB_USERNAME=app
       - DB_PASSWORD=changeme
 {% endif %}
+{% if config.database.value in ('postgresql', 'mysql') %}
     depends_on:
 {% if config.database.value == 'postgresql' %}
       postgres:
@@ -26,6 +29,7 @@ services:
 {% elif config.database.value == 'mysql' %}
       mysql:
         condition: service_healthy
+{% endif %}
 {% endif %}
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
@@ -73,13 +77,14 @@ services:
     restart: unless-stopped
 
 {% endif %}
+{% if config.database.value in ('postgresql', 'mysql') %}
 volumes:
 {% if config.database.value == 'postgresql' %}
   postgres_data:
 {% elif config.database.value == 'mysql' %}
   mysql_data:
 {% endif %}
-
+{% endif %}
 networks:
   obs-network:
     external: true

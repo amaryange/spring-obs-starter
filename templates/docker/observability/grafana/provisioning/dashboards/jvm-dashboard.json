@@ -48,7 +48,7 @@
         },
         "overrides": [
           {
-            "matcher": { "id": "byNamePattern", "options": "Max.*" },
+            "matcher": { "id": "byRegexp", "options": "Max.*" },
             "properties": [
               { "id": "custom.lineStyle", "value": { "dash": [4, 4], "fill": "dash" } },
               { "id": "custom.fillOpacity", "value": 0 }

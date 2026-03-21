@@ -155,9 +155,12 @@ def discover_projects(directory: Path) -> list[Path]:
 
 
 def has_otel_in_yml(project_path: Path) -> bool:
-    """Returns True if application.yml already has OTel/OTLP configuration."""
-    yml = project_path / "src" / "main" / "resources" / "application.yml"
-    if not yml.exists():
-        return False
-    content = yml.read_text(encoding="utf-8").lower()
-    return "management.otlp" in content or "opentelemetry" in content or "otlp" in content
+    """Returns True if application.yml or application.yaml already has OTel/OTLP configuration."""
+    resources = project_path / "src" / "main" / "resources"
+    for name in ("application.yml", "application.yaml"):
+        yml = resources / name
+        if yml.exists():
+            content = yml.read_text(encoding="utf-8").lower()
+            if "management.otlp" in content or "opentelemetry" in content or "otlp" in content:
+                return True
+    return False

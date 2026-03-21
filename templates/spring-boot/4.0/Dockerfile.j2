@@ -1,0 +1,45 @@
+# ── Stage 1: build ──────────────────────────────────────────────────────────────
+{% if config.use_maven %}
+FROM eclipse-temurin:{{ config.java_version.value }}-jdk AS builder
+
+WORKDIR /build
+
+# Cache dependencies layer before copying source
+COPY .mvn/ .mvn/
+COPY mvnw pom.xml ./
+RUN ./mvnw dependency:go-offline -q
+
+COPY src/ src/
+RUN ./mvnw package -DskipTests -q
+{% else %}
+FROM eclipse-temurin:{{ config.java_version.value }}-jdk AS builder
+
+WORKDIR /build
+
+# Cache dependencies layer before copying source
+COPY gradle/ gradle/
+COPY gradlew {% if config.use_gradle_kotlin %}build.gradle.kts settings.gradle.kts{% else %}build.gradle settings.gradle{% endif %} ./
+RUN ./gradlew dependencies -q 2>/dev/null || true
+
+COPY src/ src/
+RUN ./gradlew bootJar -x test -q
+{% endif %}
+
+# ── Stage 2: runtime ─────────────────────────────────────────────────────────────
+FROM eclipse-temurin:{{ config.java_version.value }}-jre
+
+WORKDIR /app
+
+# Non-root user for production safety
+RUN groupadd --system spring && useradd --system --gid spring spring
+USER spring
+
+{% if config.use_maven %}
+COPY --from=builder /build/target/*.jar app.jar
+{% else %}
+COPY --from=builder /build/build/libs/*.jar app.jar
+{% endif %}
+
+EXPOSE 8080
+
+ENTRYPOINT ["java", "-jar", "app.jar"]

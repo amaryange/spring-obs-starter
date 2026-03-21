@@ -208,14 +208,17 @@ def create(service_name: str) -> None:
     steps = [
         f"Generating Spring Boot {config.spring_boot_version} project...",
         "Configuring OpenTelemetry native starter...",
-        "Setting up OTel Collector pipelines (traces / metrics / logs)...",
         "Wiring Logback OTel Appender for log correlation...",
     ]
     if config.use_docker:
-        steps += [
-            "Generating Docker Compose stack with health checks...",
-            "Provisioning Grafana dashboards (JVM, HTTP, Logs-Traces)...",
-        ]
+        if config.is_standalone:
+            steps += [
+                "Setting up OTel Collector pipelines (traces / metrics / logs)...",
+                "Generating Docker Compose stack with health checks...",
+                "Provisioning Grafana dashboards (JVM, HTTP, Logs-Traces)...",
+            ]
+        else:
+            steps.append("Generating Docker Compose service config (obs-network)...")
     steps.append("Writing README with quick start guide...")
 
     console.print()
@@ -540,8 +543,12 @@ def _add_single(path: Path) -> None:
     else:
         skipped.append("OTel dependencies (already present)")
 
-    # 2. application.yml
-    yml_path = path / "src" / "main" / "resources" / "application.yml"
+    # 2. application.yml / application.yaml — prefer the existing file
+    resources_dir = path / "src" / "main" / "resources"
+    yml_path = resources_dir / "application.yml"
+    yaml_path = resources_dir / "application.yaml"
+    if yaml_path.exists() and not yml_path.exists():
+        yml_path = yaml_path
     result = patch_application_yml(yml_path)
     if result == "patched":
         done.append("application.yml (OTel block appended)")

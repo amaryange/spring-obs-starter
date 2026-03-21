@@ -115,7 +115,7 @@
     },
     {
       "id": 4,
-      "title": "Active HTTP Connections",
+      "title": "In-flight Requests",
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 8, "x": 16, "y": 1 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
@@ -131,14 +131,9 @@
       },
       "targets": [
         {
-          "expr": "tomcat_connections_active_current_connections{application=\"$service\"}",
-          "legendFormat": "Active",
+          "expr": "sum(http_server_requests_active_milliseconds_count{application=\"$service\"}) by (method)",
+          "legendFormat": "{{method}}",
           "refId": "A"
-        },
-        {
-          "expr": "tomcat_connections_current_connections{application=\"$service\"}",
-          "legendFormat": "Current",
-          "refId": "B"
         }
       ]
     },
@@ -241,15 +236,15 @@
         },
         "overrides": [
           {
-            "matcher": { "id": "byNamePattern", "options": ".*5[0-9]{2}.*" },
+            "matcher": { "id": "byRegexp", "options": ".*5[0-9]{2}.*" },
             "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }]
           },
           {
-            "matcher": { "id": "byNamePattern", "options": ".*4[0-9]{2}.*" },
+            "matcher": { "id": "byRegexp", "options": ".*4[0-9]{2}.*" },
             "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }]
           },
           {
-            "matcher": { "id": "byNamePattern", "options": ".*2[0-9]{2}.*" },
+            "matcher": { "id": "byRegexp", "options": ".*2[0-9]{2}.*" },
             "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }]
           }
         ]

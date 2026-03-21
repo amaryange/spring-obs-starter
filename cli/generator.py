@@ -76,6 +76,9 @@ class ProjectGenerator:
                 ("spring-boot/4.0/settings.gradle.j2", "settings.gradle"),
             ]
 
+        # --- Dockerfile ---
+        files.append(("spring-boot/4.0/Dockerfile.j2", "Dockerfile"))
+
         # --- Spring Boot application ---
         files += [
             (

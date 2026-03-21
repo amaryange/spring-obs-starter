@@ -83,7 +83,7 @@
       },
       "targets": [
         {
-          "expr": "sum(rate({service_name=\"$service\"} | json | severity_text=~\"$level\" [$__auto])) by (severity_text)",
+          "expr": "sum(rate({service_name=\"$service\"} | severity_text=~\"$level\" [$__auto])) by (severity_text)",
           "legendFormat": "{{severity_text}}",
           "refId": "A"
         }
@@ -119,19 +119,19 @@
       },
       "targets": [
         {
-          "expr": "sum(count_over_time({service_name=\"$service\"} | json | severity_text=\"ERROR\" [$__range]))",
+          "expr": "sum(count_over_time({service_name=\"$service\"} | severity_text=\"ERROR\" [$__range]))",
           "legendFormat": "ERROR",
           "refId": "A",
           "instant": true
         },
         {
-          "expr": "sum(count_over_time({service_name=\"$service\"} | json | severity_text=\"WARN\" [$__range]))",
+          "expr": "sum(count_over_time({service_name=\"$service\"} | severity_text=\"WARN\" [$__range]))",
           "legendFormat": "WARN",
           "refId": "B",
           "instant": true
         },
         {
-          "expr": "sum(count_over_time({service_name=\"$service\"} | json | severity_text=\"INFO\" [$__range]))",
+          "expr": "sum(count_over_time({service_name=\"$service\"} | severity_text=\"INFO\" [$__range]))",
           "legendFormat": "INFO",
           "refId": "C",
           "instant": true
@@ -164,7 +164,7 @@
       },
       "targets": [
         {
-          "expr": "{service_name=\"$service\", severity_text=~\"$level\"}",
+          "expr": "{service_name=\"$service\"} | severity_text=~\"$level\"",
           "legendFormat": "",
           "refId": "A"
         }

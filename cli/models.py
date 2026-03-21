@@ -193,7 +193,7 @@ class ProjectConfig:
             environment=TargetEnvironment.DOCKER_COMPOSE,
             database=Database.NONE,
             metrics_backend=metrics_backend,
-            deployment_mode=DeploymentMode.STANDALONE,
+            deployment_mode=DeploymentMode.MULTI_SERVICE,
         )
 
     @property
