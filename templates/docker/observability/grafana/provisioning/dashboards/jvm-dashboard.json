@@ -112,7 +112,7 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
         "defaults": {
-          "unit": "s",
+          "unit": "ms",
           "custom": { "lineWidth": 1, "fillOpacity": 10 }
         }
       },
@@ -122,7 +122,7 @@
       },
       "targets": [
         {
-          "expr": "rate(jvm_gc_pause_seconds_sum{application=\"$service\"}[$__rate_interval])",
+          "expr": "rate(jvm_gc_pause_milliseconds_sum{application=\"$service\"}[$__rate_interval])",
           "legendFormat": "{{action}} — {{cause}}",
           "refId": "A"
         }
@@ -146,7 +146,7 @@
       },
       "targets": [
         {
-          "expr": "rate(jvm_gc_pause_seconds_count{application=\"$service\"}[$__rate_interval])",
+          "expr": "rate(jvm_gc_pause_milliseconds_count{application=\"$service\"}[$__rate_interval])",
           "legendFormat": "{{action}} — {{cause}}",
           "refId": "A"
         }
@@ -216,17 +216,17 @@
       },
       "targets": [
         {
-          "expr": "jvm_threads_live_threads{application=\"$service\"}",
+          "expr": "jvm_threads_live{application=\"$service\"}",
           "legendFormat": "Live",
           "refId": "A"
         },
         {
-          "expr": "jvm_threads_daemon_threads{application=\"$service\"}",
+          "expr": "jvm_threads_daemon{application=\"$service\"}",
           "legendFormat": "Daemon",
           "refId": "B"
         },
         {
-          "expr": "jvm_threads_peak_threads{application=\"$service\"}",
+          "expr": "jvm_threads_peak{application=\"$service\"}",
           "legendFormat": "Peak",
           "refId": "C"
         }
@@ -250,7 +250,7 @@
       },
       "targets": [
         {
-          "expr": "jvm_classes_loaded_classes{application=\"$service\"}",
+          "expr": "jvm_classes_loaded{application=\"$service\"}",
           "legendFormat": "Loaded",
           "refId": "A"
         }

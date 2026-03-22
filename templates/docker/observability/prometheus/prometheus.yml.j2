@@ -6,11 +6,3 @@ scrape_configs:
   - job_name: "prometheus"
     static_configs:
       - targets: ["localhost:9090"]
-
-{% if config.is_standalone %}
-  # Scrape the app directly (standalone mode — app shares the same Docker network)
-  - job_name: "{{ config.artifact_id }}"
-    metrics_path: /actuator/prometheus
-    static_configs:
-      - targets: ["app:8080"]
-{% endif %}
