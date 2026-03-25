@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+
+    <!--
+        OpenTelemetry Logback Appender — forwards log records to the OTel Collector.
+        Enables trace_id / span_id injection in Loki for cross-signal correlation.
+        IMPORTANT: this appender is non-functional until OtelLogbackInstaller calls
+        OpenTelemetryAppender.install(openTelemetry) at startup.
+    -->
+    <appender name="OpenTelemetry"
+              class="io.opentelemetry.instrumentation.logback.appender.v1_0.OpenTelemetryAppender">
+        <!-- Capture thread name, logger name, etc. as log record attributes -->
+        <captureExperimentalAttributes>true</captureExperimentalAttributes>
+        <!-- Attach source code location (class, method, line) -->
+        <captureCodeAttributes>true</captureCodeAttributes>
+        <!-- Forward SLF4J markers as log attributes -->
+        <captureMarkerAttribute>true</captureMarkerAttribute>
+        <!-- Forward key-value pairs set via Logger.atInfo().addKeyValue(...) -->
+        <captureKeyValuePairAttributes>true</captureKeyValuePairAttributes>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="OpenTelemetry"/>
+    </root>
+</configuration>

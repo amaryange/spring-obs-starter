@@ -1,0 +1,28 @@
+package com.example.sampleapp.config;
+
+import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.instrumentation.logback.appender.v1_0.OpenTelemetryAppender;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.stereotype.Component;
+
+/**
+ * Wires the OpenTelemetry SDK instance (auto-configured by Spring Boot) into the
+ * Logback OTel Appender declared in logback-spring.xml.
+ *
+ * Without this bean, the appender is present but inert: log records are never
+ * forwarded to the OTel Collector, and trace_id / span_id are absent from Loki.
+ */
+@Component
+public class OtelLogbackInstaller implements InitializingBean {
+
+    private final OpenTelemetry openTelemetry;
+
+    public OtelLogbackInstaller(OpenTelemetry openTelemetry) {
+        this.openTelemetry = openTelemetry;
+    }
+
+    @Override
+    public void afterPropertiesSet() {
+        OpenTelemetryAppender.install(openTelemetry);
+    }
+}

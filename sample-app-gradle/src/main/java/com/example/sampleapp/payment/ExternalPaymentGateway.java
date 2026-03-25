@@ -1,0 +1,38 @@
+package com.example.sampleapp.payment;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
+
+import java.util.concurrent.atomic.AtomicInteger;
+
+/**
+ * Simulates an unreliable external payment gateway.
+ *
+ * Failure pattern: fails on calls #1, #2 — succeeds on call #3, then repeats.
+ * This makes @Retryable(maxAttempts=3) reliably succeed on the third attempt,
+ * and triggers the @CircuitBreaker after sustained failures.
+ *
+ * In a real system this would be a RestClient / WebClient call to an external API.
+ */
+@Component
+public class ExternalPaymentGateway {
+
+    private static final Logger log = LoggerFactory.getLogger(ExternalPaymentGateway.class);
+
+    private final AtomicInteger callCounter = new AtomicInteger(0);
+
+    public PaymentResult call(String operation, Long orderId) {
+        int n = callCounter.incrementAndGet();
+        log.warn("Gateway call #{} — operation={} orderId={}", n, operation, orderId);
+
+        if (n % 3 != 0) {
+            throw new PaymentGatewayException(
+                    "Gateway timeout on call #" + n + " [operation=" + operation + "]");
+        }
+
+        String txnId = "TXN-%s-%d".formatted(operation.toUpperCase(), n);
+        log.info("Gateway call succeeded — txnId={} orderId={}", txnId, orderId);
+        return new PaymentResult(orderId, txnId, "SUCCESS");
+    }
+}
