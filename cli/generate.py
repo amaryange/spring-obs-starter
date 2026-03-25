@@ -60,7 +60,6 @@ def main(ctx: click.Context) -> None:
         console.print("  [bold]Commands:[/bold]")
         console.print("  [cyan]sbo create[/cyan] <service-name>   Generate a new project")
         console.print("  [cyan]sbo init-obs[/cyan]                Generate shared obs stack")
-        console.print("  [cyan]sbo add[/cyan] [PATH...]           Add OTel to existing project(s)")
         console.print()
         console.print("  Run [cyan]sbo <command> --help[/cyan] for details.")
         console.print()
@@ -393,7 +392,7 @@ def init_obs() -> None:
     console.print()
 
 
-@main.command("add")
+@main.command("add", hidden=True)
 @click.argument("project_paths", nargs=-1, metavar="PATH...")
 def add(project_paths: tuple[str, ...]) -> None:
     """Add OTel observability wiring to one or more existing Spring Boot 4 projects.
