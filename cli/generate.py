@@ -124,11 +124,11 @@ def create(service_name: str) -> None:
         "Deployment mode?",
         choices=[
             questionary.Choice(
-                "Standalone  — app + obs stack complet (dev solo)",
+                "Standalone  — app + full obs stack (solo dev)",
                 DeploymentMode.STANDALONE,
             ),
             questionary.Choice(
-                "Multi-service — app seule, obs stack partagé (sbo init-obs)",
+                "Multi-service — app only, shared obs stack (sbo init-obs)",
                 DeploymentMode.MULTI_SERVICE,
             ),
         ],
@@ -144,14 +144,7 @@ def create(service_name: str) -> None:
             ],
         ).ask()
 
-    environment: TargetEnvironment = questionary.select(
-        "Target environment?",
-        choices=[
-            questionary.Choice("Docker Compose (local dev)", TargetEnvironment.DOCKER_COMPOSE),
-            questionary.Choice("Kubernetes / K3s", TargetEnvironment.KUBERNETES),
-            questionary.Choice("Both", TargetEnvironment.BOTH),
-        ],
-    ).ask()
+    environment: TargetEnvironment = TargetEnvironment.DOCKER_COMPOSE
 
     database: Database = questionary.select(
         "Database?",
