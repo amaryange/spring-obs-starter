@@ -8,9 +8,8 @@ group = '{{ config.base_package }}'
 version = '0.0.1-SNAPSHOT'
 
 java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of({{ config.java_version.value }})
-    }
+    sourceCompatibility = JavaVersion.VERSION_{{ config.java_version.value }}
+    targetCompatibility = JavaVersion.VERSION_{{ config.java_version.value }}
 }
 
 repositories {
