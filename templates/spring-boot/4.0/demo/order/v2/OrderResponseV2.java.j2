@@ -1,0 +1,33 @@
+package {{ config.base_package }}.order.v2;
+
+import {{ config.base_package }}.order.Order;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.Instant;
+
+/**
+ * V2 response — adds currency, createdAt, and amountWithTax (20% VAT).
+ * Additive evolution: no V1 fields removed, V1 clients are unaffected.
+ */
+public record OrderResponseV2(
+        Long id,
+        String product,
+        BigDecimal amount,
+        String currency,
+        BigDecimal amountWithTax,
+        String status,
+        Instant createdAt
+) {
+    private static final BigDecimal VAT = new BigDecimal("0.20");
+
+    public static OrderResponseV2 from(Order order) {
+        BigDecimal withTax = order.amount()
+                .multiply(BigDecimal.ONE.add(VAT))
+                .setScale(2, RoundingMode.HALF_UP);
+        return new OrderResponseV2(
+                order.id(), order.product(), order.amount(),
+                "EUR", withTax, order.status(), Instant.now()
+        );
+    }
+}

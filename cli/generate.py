@@ -69,7 +69,9 @@ def main(ctx: click.Context) -> None:
 
 @main.command()
 @click.argument("service_name")
-def create(service_name: str) -> None:
+@click.option("--demo", is_flag=True, default=False,
+              help="Include demo controllers and services to showcase OTel, @Observed, and resilience patterns.")
+def create(service_name: str, demo: bool) -> None:
     """Generate a new Spring Boot 4 project with full OTel observability.
 
     SERVICE_NAME: name of the service (e.g. payment-service, order-api)
@@ -178,6 +180,7 @@ def create(service_name: str) -> None:
         build_tool=build_tool,
         metrics_backend=metrics_backend,
         deployment_mode=deployment_mode,
+        demo=demo,
     )
 
     output_dir = Path.cwd() / config.artifact_id
@@ -202,6 +205,8 @@ def create(service_name: str) -> None:
         "Configuring OpenTelemetry native starter...",
         "Wiring Logback OTel Appender for log correlation...",
     ]
+    if config.demo:
+        steps.append("Generating demo code (@Observed, @Retryable, @CircuitBreaker)...")
     if config.use_docker:
         if config.is_standalone:
             steps += [

@@ -1,0 +1,73 @@
+package {{ config.base_package }}.payment;
+
+import io.micrometer.observation.annotation.Observed;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.CircuitBreaker;
+import org.springframework.retry.annotation.Recover;
+import org.springframework.retry.annotation.Retryable;
+import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+
+/**
+ * Demonstrates two resilience patterns with Spring Retry:
+ *
+ * 1. @Retryable — authorize(): retried up to 3x with exponential backoff
+ *    (100ms → 200ms → 400ms, capped at 500ms). The @Observed span covers
+ *    the full attempt sequence — visible in Tempo.
+ *
+ * 2. @CircuitBreaker — settle(): after repeated failures within 5s,
+ *    the circuit opens and calls short-circuit to the @Recover fallback
+ *    for 20s. Look for "CIRCUIT_OPEN" status in the response.
+ *
+ * Call these endpoints repeatedly to see the patterns in action:
+ *   GET /api/v1/payment/authorize/1  → fails twice, succeeds on 3rd attempt
+ *   GET /api/v1/payment/settle/1     → eventually triggers circuit open
+ */
+@Service
+public class PaymentService {
+
+    private static final Logger log = LoggerFactory.getLogger(PaymentService.class);
+
+    private final ExternalPaymentGateway gateway;
+
+    public PaymentService(ExternalPaymentGateway gateway) {
+        this.gateway = gateway;
+    }
+
+    @Observed(name = "payment.authorize", contextualName = "authorizing-payment")
+    @Retryable(
+            retryFor = PaymentGatewayException.class,
+            maxAttempts = 3,
+            backoff = @Backoff(delay = 100, multiplier = 2, maxDelay = 500)
+    )
+    public PaymentResult authorize(Long orderId, BigDecimal amount) {
+        log.info("Attempting payment authorization — orderId={} amount={}", orderId, amount);
+        return gateway.call("authorize", orderId);
+    }
+
+    @Recover
+    public PaymentResult authorizeRecover(PaymentGatewayException ex, Long orderId, BigDecimal amount) {
+        log.warn("Authorization exhausted all retries — orderId={} reason={}", orderId, ex.getMessage());
+        return new PaymentResult(orderId, null, "FAILED");
+    }
+
+    @Observed(name = "payment.settle", contextualName = "settling-payment")
+    @CircuitBreaker(
+            include = PaymentGatewayException.class,
+            openTimeout = 5_000L,
+            resetTimeout = 20_000L
+    )
+    public PaymentResult settle(Long orderId) {
+        log.info("Attempting payment settlement — orderId={}", orderId);
+        return gateway.call("settle", orderId);
+    }
+
+    @Recover
+    public PaymentResult settleRecover(PaymentGatewayException ex, Long orderId) {
+        log.error("Circuit breaker triggered — orderId={} reason={}", orderId, ex.getMessage());
+        return new PaymentResult(orderId, null, "CIRCUIT_OPEN");
+    }
+}

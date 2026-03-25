@@ -62,6 +62,7 @@ class ProjectConfig:
     metrics_backend: MetricsBackend = MetricsBackend.PROMETHEUS
     deployment_mode: DeploymentMode = DeploymentMode.STANDALONE
     spring_boot_version: str = "4.0.3"
+    demo: bool = False
 
     # ------------------------------------------------------------------
     # Derived identifiers

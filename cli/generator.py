@@ -128,6 +128,10 @@ class ProjectGenerator:
                 "src/main/resources/db/migration/V1__init.sql",
             ))
 
+        # --- Demo code (@Observed, @Retryable, @CircuitBreaker) ---
+        if config.demo:
+            files += self._demo_files(config)
+
         # --- Docker Compose stack ---
         if config.use_docker:
             if config.is_standalone:
@@ -198,6 +202,29 @@ class ProjectGenerator:
             ))
 
         return files
+
+    # ------------------------------------------------------------------
+    # Demo files (@Observed, @Retryable, @CircuitBreaker examples)
+    # ------------------------------------------------------------------
+
+    def _demo_files(self, config: ProjectConfig) -> list[tuple[str, str]]:
+        pkg = config.package_path
+        d = "spring-boot/4.0/demo"
+        return [
+            (f"{d}/config/ResilienceConfig.java.j2",        f"src/main/java/{pkg}/config/ResilienceConfig.java"),
+            (f"{d}/order/Order.java.j2",                     f"src/main/java/{pkg}/order/Order.java"),
+            (f"{d}/order/OrderNotFoundException.java.j2",    f"src/main/java/{pkg}/order/OrderNotFoundException.java"),
+            (f"{d}/order/OrderExceptionHandler.java.j2",     f"src/main/java/{pkg}/order/OrderExceptionHandler.java"),
+            (f"{d}/order/OrderService.java.j2",              f"src/main/java/{pkg}/order/OrderService.java"),
+            (f"{d}/order/OrderController.java.j2",           f"src/main/java/{pkg}/order/OrderController.java"),
+            (f"{d}/order/v2/OrderResponseV2.java.j2",        f"src/main/java/{pkg}/order/v2/OrderResponseV2.java"),
+            (f"{d}/order/v2/OrderControllerV2.java.j2",      f"src/main/java/{pkg}/order/v2/OrderControllerV2.java"),
+            (f"{d}/payment/PaymentGatewayException.java.j2", f"src/main/java/{pkg}/payment/PaymentGatewayException.java"),
+            (f"{d}/payment/PaymentResult.java.j2",           f"src/main/java/{pkg}/payment/PaymentResult.java"),
+            (f"{d}/payment/ExternalPaymentGateway.java.j2",  f"src/main/java/{pkg}/payment/ExternalPaymentGateway.java"),
+            (f"{d}/payment/PaymentService.java.j2",          f"src/main/java/{pkg}/payment/PaymentService.java"),
+            (f"{d}/payment/PaymentController.java.j2",       f"src/main/java/{pkg}/payment/PaymentController.java"),
+        ]
 
     # ------------------------------------------------------------------
     # init-obs: shared observability stack
