@@ -1,15 +1,14 @@
 <div align="center">
 
 ```
- ___  ___  ___         █▀█ █▄▄ █▀
-/ __|| _ )||_ )  ───  █▄█ █▄█ ▄█  Spring Boot 4 + OTel
-\__ \| _ \ / /         Observability Starter
+ ___  ___  ___
+/ __|| _ )||_ )   Spring Boot 4 + OTel
+\__ \| _ \ / /    Observability Starter
 |___/|___//___|
 ```
 
 **Traces · Metrics · Logs — correlated out of the box**
 
-[![Python](https://img.shields.io/badge/Python-3.11+-blue?logo=python)](https://python.org)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0.x-6DB33F?logo=springboot)](https://spring.io/projects/spring-boot)
 [![OpenTelemetry](https://img.shields.io/badge/OpenTelemetry-native-000?logo=opentelemetry)](https://opentelemetry.io)
 [![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
@@ -44,10 +43,10 @@ The `trace_id` is automatically injected into every log line — giving you dire
 
 | Tool | Version |
 |------|---------|
-| Python | 3.11+ |
 | Java | 17 or 21 |
 | Docker + Docker Compose | v2+ |
-| pip | latest |
+
+> `sbo` is a standalone binary — no Python, no pip, no JDK required to run the generator itself.
 
 ---
 
@@ -76,8 +75,6 @@ chmod +x sbo-linux-x86_64
 sudo mv sbo-linux-x86_64 /usr/local/bin/sbo
 ```
 
-> No Python, no pip, no JDK required — `sbo` is a standalone binary.
-
 Verify:
 
 ```bash
@@ -96,6 +93,8 @@ Generates a new Spring Boot 4 project from scratch.
 sbo create payment-service
 ```
 
+Add `--demo` to include working example code (see [Demo mode](#demo-mode) below).
+
 **Interactive questions:**
 
 | Question | Options |
@@ -105,7 +104,6 @@ sbo create payment-service
 | Trace backend | Tempo *(recommended)*, Jaeger, Zipkin, Tempo + Jaeger |
 | Deployment mode | Standalone, Multi-service |
 | Metrics backend | Prometheus *(recommended)*, Mimir |
-| Target environment | Docker Compose, Kubernetes, Both |
 | Database | None, PostgreSQL, MySQL, Oracle, H2 |
 | Base package | e.g. `com.example.payment` |
 
@@ -118,14 +116,17 @@ sbo create payment-service
 
 ```
 payment-service/
-├── pom.xml                          # or build.gradle.kts / build.gradle
+├── pom.xml                              # or build.gradle.kts / build.gradle
+├── mvnw  mvnw.cmd                       # or gradlew / gradlew.bat
+├── .mvn/wrapper/                        # or gradle/wrapper/
+├── Dockerfile
 ├── src/main/java/com/example/payment/
 │   ├── PaymentServiceApplication.java
 │   └── config/
-│       └── OtelLogbackInstaller.java  # wires Logback → OTel Collector
+│       └── OtelLogbackInstaller.java    # wires Logback → OTel Collector
 ├── src/main/resources/
-│   ├── application.yml               # OTel + actuator config
-│   └── logback-spring.xml            # Logback with OTel Appender
+│   ├── application.yml                  # OTel + actuator config
+│   └── logback-spring.xml              # Logback with OTel Appender
 └── docker/
     ├── docker-compose.yml
     └── observability/
@@ -152,6 +153,49 @@ docker compose -f docker/docker-compose.yml up -d
 | Grafana | http://localhost:3000 (admin / admin) |
 | Prometheus | http://localhost:9090 |
 | Tempo | http://localhost:3200 |
+
+---
+
+#### Demo mode
+
+```bash
+sbo create payment-service --demo
+```
+
+The `--demo` flag adds working example code to the generated project — useful to see how all the pieces fit together before writing your own business logic.
+
+**What gets added:**
+
+| File | Demonstrates |
+|------|-------------|
+| `order/OrderController.java` (v1 + v2) | REST endpoints, API versioning |
+| `order/OrderService.java` | `@Observed` → auto span + Micrometer timer |
+| `order/OrderExceptionHandler.java` | RFC 9457 `ProblemDetail`, structured error logs |
+| `payment/PaymentService.java` | `@Retryable` with exponential backoff |
+| `payment/PaymentService.java` | `@CircuitBreaker` with fallback |
+| `payment/ExternalPaymentGateway.java` | Simulated unreliable dependency |
+| `config/ResilienceConfig.java` | Activates Spring Retry AOP |
+
+**Try these endpoints to generate telemetry:**
+
+```bash
+# Fast — visible in Tempo + Prometheus
+curl http://localhost:8080/api/v1/orders
+curl http://localhost:8080/api/v1/orders/1
+curl http://localhost:8080/api/v2/orders
+
+# Triggers a 404 + log warning with trace_id → navigate to Loki → Tempo
+curl http://localhost:8080/api/v1/orders/999
+
+# Random 500ms–2s delay — watch p95/p99 spike in the HTTP dashboard
+curl http://localhost:8080/api/v1/orders/slow
+
+# @Retryable: fails twice, succeeds on 3rd attempt — 3 spans in Tempo
+curl http://localhost:8080/api/v1/payment/authorize/1
+
+# @CircuitBreaker: repeat to open the circuit → returns CIRCUIT_OPEN
+curl http://localhost:8080/api/v1/payment/settle/1
+```
 
 ---
 
@@ -206,7 +250,6 @@ All services that join `obs-network` will automatically route their telemetry to
 │  │ payment-svc  │  │  order-api   │  │  user-svc    │     │
 │  │  :8080       │  │  :8081       │  │  :8082       │     │
 │  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘     │
-│         │                 │                  │              │
 │         └─────────────────┴──────────────────┘             │
 │                           │ OTLP :4318                      │
 │                  ┌────────▼────────┐                        │
@@ -306,10 +349,10 @@ Le `trace_id` est automatiquement injecté dans chaque ligne de log — ce qui p
 
 | Outil | Version |
 |-------|---------|
-| Python | 3.11+ |
 | Java | 17 ou 21 |
 | Docker + Docker Compose | v2+ |
-| pip | dernière version |
+
+> `sbo` est un binaire standalone — aucune dépendance Python, pip ou JDK requise pour le générateur.
 
 ---
 
@@ -338,8 +381,6 @@ chmod +x sbo-linux-x86_64
 sudo mv sbo-linux-x86_64 /usr/local/bin/sbo
 ```
 
-> Aucune dépendance Python, pip ou JDK — `sbo` est un binaire standalone.
-
 Vérification :
 
 ```bash
@@ -358,6 +399,8 @@ Génère un nouveau projet Spring Boot 4 de zéro.
 sbo create payment-service
 ```
 
+Ajoutez `--demo` pour inclure du code d'exemple (voir [Mode demo](#mode-demo) ci-dessous).
+
 **Questions interactives :**
 
 | Question | Options |
@@ -367,7 +410,6 @@ sbo create payment-service
 | Backend de traces | Tempo *(recommandé)*, Jaeger, Zipkin, Tempo + Jaeger |
 | Mode de déploiement | Standalone, Multi-service |
 | Backend de métriques | Prometheus *(recommandé)*, Mimir |
-| Environnement cible | Docker Compose, Kubernetes, Les deux |
 | Base de données | Aucune, PostgreSQL, MySQL, Oracle, H2 |
 | Package de base | ex. `com.example.payment` |
 
@@ -390,6 +432,49 @@ docker compose -f docker/docker-compose.yml up -d
 | Grafana | http://localhost:3000 (admin / admin) |
 | Prometheus | http://localhost:9090 |
 | Tempo | http://localhost:3200 |
+
+---
+
+#### Mode demo
+
+```bash
+sbo create payment-service --demo
+```
+
+Le flag `--demo` ajoute du code d'exemple fonctionnel au projet généré — idéal pour voir comment tout s'assemble avant d'écrire sa propre logique métier.
+
+**Ce qui est ajouté :**
+
+| Fichier | Démontre |
+|---------|----------|
+| `order/OrderController.java` (v1 + v2) | Endpoints REST, versioning d'API |
+| `order/OrderService.java` | `@Observed` → span auto + timer Micrometer |
+| `order/OrderExceptionHandler.java` | RFC 9457 `ProblemDetail`, logs d'erreur structurés |
+| `payment/PaymentService.java` | `@Retryable` avec backoff exponentiel |
+| `payment/PaymentService.java` | `@CircuitBreaker` avec fallback |
+| `payment/ExternalPaymentGateway.java` | Dépendance externe défaillante simulée |
+| `config/ResilienceConfig.java` | Active les proxies AOP Spring Retry |
+
+**Endpoints pour générer de la télémétrie :**
+
+```bash
+# Rapide — visible dans Tempo + Prometheus
+curl http://localhost:8080/api/v1/orders
+curl http://localhost:8080/api/v1/orders/1
+curl http://localhost:8080/api/v2/orders
+
+# Déclenche un 404 + log warning avec trace_id → naviguer vers Loki → Tempo
+curl http://localhost:8080/api/v1/orders/999
+
+# Délai aléatoire 500ms–2s — observer le p95/p99 dans le dashboard HTTP
+curl http://localhost:8080/api/v1/orders/slow
+
+# @Retryable : échoue 2 fois, réussit au 3e essai — 3 spans dans Tempo
+curl http://localhost:8080/api/v1/payment/authorize/1
+
+# @CircuitBreaker : répéter pour ouvrir le circuit → retourne CIRCUIT_OPEN
+curl http://localhost:8080/api/v1/payment/settle/1
+```
 
 ---
 
