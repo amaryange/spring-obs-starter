@@ -196,38 +196,6 @@ All services that join `obs-network` will automatically route their telemetry to
 
 ---
 
-#### `sbo add [PATH...]`
-
-Adds OTel observability wiring to **one or more existing Spring Boot 4 projects**.
-**Non-destructive:** skips any file that already exists or is already configured.
-
-```bash
-# Single project (current directory)
-sbo add .
-
-# Explicit paths (polyrepo)
-sbo add ~/services/payment-service ~/services/order-api
-
-# Monorepo — auto-discovers Spring Boot projects one level deep
-sbo add ~/my-platform/services/
-```
-
-**What it does:**
-
-| Action | Condition |
-|--------|-----------|
-| Adds OTel deps to `pom.xml` / `build.gradle` | if not already present |
-| Appends OTel block to `application.yml` | if `otlp` not already configured |
-| Creates `OtelLogbackInstaller.java` | if file does not exist |
-| Creates `logback-spring.xml` | if file does not exist |
-| Generates `docker/docker-compose.yml` | if directory does not exist *(optional)* |
-
-**Auto-detection:** build tool, service name, Java version, base package, Spring Boot version, database.
-
-> ⚠️ If a `management:` key already exists in your `application.yml`, merge the appended block manually.
-
----
-
 ### Multi-service architecture
 
 ```
@@ -265,9 +233,6 @@ cd obs-stack && docker compose up -d
 # 2. Generate services (multi-service mode)
 sbo create payment-service   # choose: Multi-service
 sbo create order-api         # choose: Multi-service
-
-# Or add OTel to existing services
-sbo add payment-service/ order-api/
 
 # 3. Start each service
 cd payment-service && APP_PORT=8080 docker compose -f docker/docker-compose.yml up -d
@@ -456,38 +421,6 @@ Tous les services rejoignant `obs-network` routeront automatiquement leur télé
 
 ---
 
-#### `sbo add [PATH...]`
-
-Ajoute le câblage OTel à **un ou plusieurs projets Spring Boot 4 existants**.
-**Non-destructif :** ignore les fichiers qui existent déjà ou sont déjà configurés.
-
-```bash
-# Projet courant
-sbo add .
-
-# Chemins explicites (polyrepo)
-sbo add ~/services/payment-service ~/services/order-api
-
-# Monorepo — auto-découverte des projets Spring Boot au niveau 1
-sbo add ~/my-platform/services/
-```
-
-**Ce que ça fait :**
-
-| Action | Condition |
-|--------|-----------|
-| Ajoute les dépendances OTel dans `pom.xml` / `build.gradle` | si absentes |
-| Ajoute le bloc OTel dans `application.yml` | si `otlp` non configuré |
-| Crée `OtelLogbackInstaller.java` | si le fichier n'existe pas |
-| Crée `logback-spring.xml` | si le fichier n'existe pas |
-| Génère `docker/docker-compose.yml` | si absent *(optionnel)* |
-
-**Auto-détection :** outil de build, nom du service, version Java, package de base, version Spring Boot, base de données.
-
-> ⚠️ Si une clé `management:` existe déjà dans `application.yml`, fusionner le bloc ajouté manuellement.
-
----
-
 ### Architecture multi-service
 
 ```
@@ -524,9 +457,6 @@ cd obs-stack && docker compose up -d
 # 2. Générer les services (mode multi-service)
 sbo create payment-service   # choisir : Multi-service
 sbo create order-api         # choisir : Multi-service
-
-# Ou ajouter OTel à des services existants
-sbo add payment-service/ order-api/
 
 # 3. Démarrer chaque service
 cd payment-service && APP_PORT=8080 docker compose -f docker/docker-compose.yml up -d
