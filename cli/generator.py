@@ -42,6 +42,8 @@ class ProjectGenerator:
     # Public API
     # ------------------------------------------------------------------
 
+    _EXECUTABLES = {"mvnw", "gradlew"}
+
     def generate(self, config: ProjectConfig, output_dir: Path) -> None:
         output_dir.mkdir(parents=True, exist_ok=True)
         for template_path, output_path in self._build_manifest(config):
@@ -51,6 +53,8 @@ class ProjectGenerator:
                 self._render(config, template_path, full_output)
             else:
                 self._copy(template_path, full_output)
+            if full_output.name in self._EXECUTABLES:
+                full_output.chmod(full_output.stat().st_mode | 0o111)
 
     # ------------------------------------------------------------------
     # File manifest
@@ -62,18 +66,36 @@ class ProjectGenerator:
         cls = config.class_name
         files: list[tuple[str, str]] = []
 
-        # --- Build descriptor ---
+        # --- Build descriptor + wrapper ---
         if config.use_maven:
-            files.append(("spring-boot/4.0/pom.xml.j2", "pom.xml"))
+            files += [
+                ("spring-boot/4.0/pom.xml.j2", "pom.xml"),
+                ("spring-boot/4.0/wrapper/maven/mvnw", "mvnw"),
+                ("spring-boot/4.0/wrapper/maven/mvnw.cmd", "mvnw.cmd"),
+                ("spring-boot/4.0/wrapper/maven/.mvn/wrapper/maven-wrapper.properties",
+                 ".mvn/wrapper/maven-wrapper.properties"),
+            ]
         elif config.use_gradle_kotlin:
             files += [
                 ("spring-boot/4.0/build.gradle.kts.j2", "build.gradle.kts"),
                 ("spring-boot/4.0/settings.gradle.kts.j2", "settings.gradle.kts"),
+                ("spring-boot/4.0/wrapper/gradle/gradlew", "gradlew"),
+                ("spring-boot/4.0/wrapper/gradle/gradlew.bat", "gradlew.bat"),
+                ("spring-boot/4.0/wrapper/gradle/gradle/wrapper/gradle-wrapper.properties",
+                 "gradle/wrapper/gradle-wrapper.properties"),
+                ("spring-boot/4.0/wrapper/gradle/gradle/wrapper/gradle-wrapper.jar",
+                 "gradle/wrapper/gradle-wrapper.jar"),
             ]
         else:  # Gradle Groovy
             files += [
                 ("spring-boot/4.0/build.gradle.j2", "build.gradle"),
                 ("spring-boot/4.0/settings.gradle.j2", "settings.gradle"),
+                ("spring-boot/4.0/wrapper/gradle/gradlew", "gradlew"),
+                ("spring-boot/4.0/wrapper/gradle/gradlew.bat", "gradlew.bat"),
+                ("spring-boot/4.0/wrapper/gradle/gradle/wrapper/gradle-wrapper.properties",
+                 "gradle/wrapper/gradle-wrapper.properties"),
+                ("spring-boot/4.0/wrapper/gradle/gradle/wrapper/gradle-wrapper.jar",
+                 "gradle/wrapper/gradle-wrapper.jar"),
             ]
 
         # --- Dockerfile ---
