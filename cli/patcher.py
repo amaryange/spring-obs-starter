@@ -16,20 +16,20 @@ OTEL_DEPS_MAVEN = [
     {
         "groupId": "io.opentelemetry.instrumentation",
         "artifactId": "opentelemetry-logback-appender-1.0",
-        "version": "2.26.0-alpha",
+        "version": "2.21.0-alpha",
     },
 ]
 
 OTEL_DEPS_GRADLE_KOTLIN = [
     'implementation("org.springframework.boot:spring-boot-starter-opentelemetry")',
     'implementation("org.springframework.boot:spring-boot-starter-aspectj")',
-    'implementation("io.opentelemetry.instrumentation:opentelemetry-logback-appender-1.0:2.26.0-alpha")',
+    'implementation("io.opentelemetry.instrumentation:opentelemetry-logback-appender-1.0:2.21.0-alpha")',
 ]
 
 OTEL_DEPS_GRADLE_GROOVY = [
     "implementation 'org.springframework.boot:spring-boot-starter-opentelemetry'",
     "implementation 'org.springframework.boot:spring-boot-starter-aspectj'",
-    "implementation 'io.opentelemetry.instrumentation:opentelemetry-logback-appender-1.0:2.26.0-alpha'",
+    "implementation 'io.opentelemetry.instrumentation:opentelemetry-logback-appender-1.0:2.21.0-alpha'",
 ]
 
 # ---------------------------------------------------------------------------
