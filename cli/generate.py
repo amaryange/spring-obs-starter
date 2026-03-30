@@ -244,7 +244,7 @@ def create(service_name: str, demo: bool) -> None:
     console.print(f"  $ cd {config.artifact_id}")
     if config.use_docker:
         console.print("  $ docker compose -f docker/docker-compose.yml up -d")
-    console.print("  $ ./mvnw spring-boot:run")
+    console.print(f"  $ {config.build_command}")
     console.print()
 
     if config.use_docker:
