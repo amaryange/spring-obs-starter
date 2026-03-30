@@ -6,7 +6,7 @@ services:
       context: ..
     container_name: {{ config.artifact_id }}
     ports:
-      - "${APP_PORT:-8080}:8080"
+      - "{{ config.app_port }}:8080"
     environment:
       - SPRING_APPLICATION_NAME={{ config.artifact_id }}
       # otel-collector is provided by the shared obs stack (sbo init-obs)

@@ -4,7 +4,9 @@ from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
-from cli.models import ProjectConfig, TargetEnvironment, Database, MetricsBackend
+from dataclasses import replace
+
+from cli.models import ProjectConfig, TargetEnvironment, Database, MetricsBackend, DeploymentMode, StackConfig
 
 
 def _get_templates_dir() -> Path:
@@ -230,16 +232,58 @@ class ProjectGenerator:
     # init-obs: shared observability stack
     # ------------------------------------------------------------------
 
-    def generate_obs_stack(self, config: "ProjectConfig", output_dir: Path) -> None:
+    def generate_obs_stack(
+        self,
+        config: "ProjectConfig",
+        output_dir: Path,
+        stack_config: "StackConfig | None" = None,
+    ) -> None:
         """Generate a standalone shared obs stack (no app service)."""
         output_dir.mkdir(parents=True, exist_ok=True)
         for template_path, output_path in self._obs_manifest(config):
             full_output = output_dir / output_path
             full_output.parent.mkdir(parents=True, exist_ok=True)
             if template_path.endswith(".j2"):
-                self._render(config, template_path, full_output)
+                if stack_config is not None and "prometheus.yml.j2" in template_path:
+                    self._render_with_context(
+                        {"config": config, "stack": stack_config},
+                        template_path,
+                        full_output,
+                    )
+                else:
+                    self._render(config, template_path, full_output)
             else:
                 self._copy(template_path, full_output)
+
+    def generate_stack(self, stack_config: "StackConfig", output_dir: Path) -> None:
+        """Generate a complete multi-service stack: obs-stack + N services + root compose."""
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        # 1. Shared obs stack (prometheus gets per-service scrape targets)
+        obs_config = ProjectConfig.for_obs_stack(
+            trace_backend=stack_config.trace_backend,
+            metrics_backend=stack_config.metrics_backend,
+        )
+        self.generate_obs_stack(obs_config, output_dir / "obs-stack", stack_config=stack_config)
+
+        # 2. Per-service projects (always MULTI_SERVICE deployment mode)
+        for svc in stack_config.services:
+            svc_config = replace(svc, deployment_mode=DeploymentMode.MULTI_SERVICE)
+            self.generate(svc_config, output_dir / svc_config.artifact_id)
+
+        # 3. Root docker-compose.yml
+        self._render_with_context(
+            {"stack": stack_config},
+            "docker/docker-compose.root.yml.j2",
+            output_dir / "docker-compose.yml",
+        )
+
+        # 4. Root README.md
+        self._render_with_context(
+            {"stack": stack_config},
+            "README.stack.md.j2",
+            output_dir / "README.md",
+        )
 
     def _obs_manifest(self, config: "ProjectConfig") -> list[tuple[str, str]]:
         files: list[tuple[str, str]] = [
@@ -303,6 +347,10 @@ class ProjectGenerator:
     def _render(self, config: ProjectConfig, template_path: str, output: Path) -> None:
         template = self.env.get_template(template_path)
         output.write_text(template.render(config=config), encoding="utf-8")
+
+    def _render_with_context(self, context: dict, template_path: str, output: Path) -> None:
+        template = self.env.get_template(template_path)
+        output.write_text(template.render(**context), encoding="utf-8")
 
     def _copy(self, template_path: str, output: Path) -> None:
         src = self.templates_dir / template_path

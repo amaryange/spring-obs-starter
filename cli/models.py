@@ -63,6 +63,7 @@ class ProjectConfig:
     deployment_mode: DeploymentMode = DeploymentMode.STANDALONE
     spring_boot_version: str = "4.0.3"
     demo: bool = False
+    app_port: int = 8080
 
     # ------------------------------------------------------------------
     # Derived identifiers
@@ -237,3 +238,36 @@ class ProjectConfig:
             case _:
                 return "changeme"
 
+
+@dataclass
+class StackConfig:
+    """Configuration for the create-stack command (shared obs + N services)."""
+
+    stack_name: str
+    trace_backend: TraceBackend
+    metrics_backend: MetricsBackend
+    services: list[ProjectConfig] = field(default_factory=list)
+
+    @property
+    def artifact_id(self) -> str:
+        return self.stack_name.lower().replace("_", "-")
+
+    @property
+    def use_tempo(self) -> bool:
+        return self.trace_backend in (TraceBackend.TEMPO, TraceBackend.TEMPO_JAEGER)
+
+    @property
+    def use_jaeger(self) -> bool:
+        return self.trace_backend in (TraceBackend.JAEGER, TraceBackend.TEMPO_JAEGER)
+
+    @property
+    def use_zipkin(self) -> bool:
+        return self.trace_backend == TraceBackend.ZIPKIN
+
+    @property
+    def use_prometheus(self) -> bool:
+        return self.metrics_backend == MetricsBackend.PROMETHEUS
+
+    @property
+    def use_mimir(self) -> bool:
+        return self.metrics_backend == MetricsBackend.MIMIR

@@ -1,0 +1,6 @@
+name: {{ stack.artifact_id }}
+
+include:
+  - obs-stack/docker-compose.yml
+{% for svc in stack.services %}  - {{ svc.artifact_id }}/docker/docker-compose.yml
+{% endfor %}

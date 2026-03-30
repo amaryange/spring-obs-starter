@@ -6,3 +6,11 @@ scrape_configs:
   - job_name: "prometheus"
     static_configs:
       - targets: ["localhost:9090"]
+{%- if stack is defined %}
+{% for svc in stack.services %}
+  - job_name: "{{ svc.artifact_id }}"
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ["{{ svc.artifact_id }}:{{ svc.app_port }}"]
+{%- endfor %}
+{%- endif %}

@@ -15,6 +15,7 @@ from cli.models import (
     JavaVersion,
     MetricsBackend,
     ProjectConfig,
+    StackConfig,
     TargetEnvironment,
     TraceBackend,
 )
@@ -58,8 +59,9 @@ def main(ctx: click.Context) -> None:
     if ctx.invoked_subcommand is None:
         console.print(_BANNER)
         console.print("  [bold]Commands:[/bold]")
-        console.print("  [cyan]sbo create[/cyan] <service-name>   Generate a new project")
-        console.print("  [cyan]sbo init-obs[/cyan]                Generate shared obs stack")
+        console.print("  [cyan]sbo create[/cyan] <service-name>        Generate a new project")
+        console.print("  [cyan]sbo create-stack[/cyan] <stack-name>    Generate a multi-service stack")
+        console.print("  [cyan]sbo init-obs[/cyan]                     Generate shared obs stack")
         console.print()
         console.print("  Run [cyan]sbo <command> --help[/cyan] for details.")
         console.print()
@@ -382,6 +384,248 @@ def init_obs() -> None:
 
     console.print("  [bold]Connect a service:[/bold]")
     console.print("  $ sbo create my-service  [dim]# choose Multi-service mode[/dim]")
+    console.print()
+
+    console.print(
+        "  [dim]⚠  Change Grafana credentials before going to production.[/dim]"
+    )
+    console.print()
+
+
+def _validate_service_count(value: str) -> bool | str:
+    try:
+        n = int(value)
+        if 1 <= n <= 20:
+            return True
+        return "Enter a number between 1 and 20."
+    except ValueError:
+        return "Enter a valid integer."
+
+
+def _ask_unique_service_name(existing: set[str]) -> str:
+    while True:
+        name: str = questionary.text(
+            "Service name?",
+            validate=validate_service_name,
+        ).ask()
+        slug = name.lower().replace("_", "-")
+        if slug in existing:
+            console.print(f"  [red]'{slug}' is already used in this stack. Choose a different name.[/red]")
+        else:
+            return name
+
+
+@main.command("create-stack")
+@click.argument("stack_name")
+@click.option("--demo", is_flag=True, default=False,
+              help="Include demo controllers and services in each generated project.")
+def create_stack(stack_name: str, demo: bool) -> None:
+    """Generate a complete multi-service stack: shared obs stack + N services.
+
+    STACK_NAME: name of the stack directory (e.g. ecommerce-stack)
+    """
+    validation = validate_service_name(stack_name)
+    if validation is not True:
+        console.print(f"[red]Error:[/red] {validation}")
+        raise SystemExit(1)
+
+    console.print()
+    console.print(
+        Panel.fit(
+            "[bold cyan]spring-obs-starter[/bold cyan] — Multi-Service Stack",
+            subtitle=f"Creating [bold]{stack_name}[/bold]",
+        )
+    )
+    console.print()
+
+    # ------------------------------------------------------------------
+    # Step 1: shared obs config (asked once)
+    # ------------------------------------------------------------------
+
+    trace_backend: TraceBackend = questionary.select(
+        "Trace backend? (shared across all services)",
+        choices=[
+            questionary.Choice("Tempo (recommended)", TraceBackend.TEMPO),
+            questionary.Choice("Jaeger", TraceBackend.JAEGER),
+            questionary.Choice("Zipkin", TraceBackend.ZIPKIN),
+            questionary.Choice("Tempo + Jaeger", TraceBackend.TEMPO_JAEGER),
+        ],
+    ).ask()
+
+    metrics_backend: MetricsBackend = questionary.select(
+        "Metrics backend? (shared across all services)",
+        choices=[
+            questionary.Choice("Prometheus (recommended)", MetricsBackend.PROMETHEUS),
+            questionary.Choice("Mimir (long-term storage, Prometheus-compatible)", MetricsBackend.MIMIR),
+        ],
+    ).ask()
+
+    # ------------------------------------------------------------------
+    # Step 2: number of services
+    # ------------------------------------------------------------------
+
+    num_services_str: str = questionary.text(
+        "How many services?",
+        default="2",
+        validate=_validate_service_count,
+    ).ask()
+    num_services = int(num_services_str)
+
+    # ------------------------------------------------------------------
+    # Step 3: per-service configuration
+    # ------------------------------------------------------------------
+
+    existing_names: set[str] = {"obs-stack"}
+    services: list[ProjectConfig] = []
+
+    for i in range(num_services):
+        console.print()
+        console.rule(f"[cyan]Service {i + 1}/{num_services}[/cyan]")
+        console.print()
+
+        svc_name = _ask_unique_service_name(existing_names)
+        existing_names.add(svc_name.lower().replace("_", "-"))
+
+        build_tool: BuildTool = questionary.select(
+            "Build tool?",
+            choices=[
+                questionary.Choice("Maven (recommended)", BuildTool.MAVEN),
+                questionary.Choice("Gradle — Kotlin DSL", BuildTool.GRADLE_KOTLIN),
+                questionary.Choice("Gradle — Groovy DSL", BuildTool.GRADLE_GROOVY),
+            ],
+        ).ask()
+
+        java_version: JavaVersion = questionary.select(
+            "Java version?",
+            choices=[
+                questionary.Choice("21 LTS (recommended)", JavaVersion.V21),
+                questionary.Choice("17 LTS", JavaVersion.V17),
+            ],
+        ).ask()
+
+        database: Database = questionary.select(
+            "Database?",
+            choices=[
+                questionary.Choice("None (in-memory / no persistence)", Database.NONE),
+                questionary.Choice("PostgreSQL", Database.POSTGRESQL),
+                questionary.Choice("MySQL", Database.MYSQL),
+                questionary.Choice("Oracle", Database.ORACLE),
+                questionary.Choice("H2 (dev only)", Database.H2),
+            ],
+        ).ask()
+
+        default_pkg = f"com.example.{svc_name.lower().replace('-', '').replace('_', '')}"
+        base_package: str = questionary.text(
+            "Base package?",
+            default=default_pkg,
+            validate=validate_package,
+        ).ask()
+
+        app_port = 8080 + i
+
+        services.append(ProjectConfig(
+            service_name=svc_name,
+            base_package=base_package,
+            java_version=java_version,
+            trace_backend=trace_backend,
+            environment=TargetEnvironment.DOCKER_COMPOSE,
+            database=database,
+            build_tool=build_tool,
+            metrics_backend=metrics_backend,
+            deployment_mode=DeploymentMode.MULTI_SERVICE,
+            demo=demo,
+            app_port=app_port,
+        ))
+
+    stack_config = StackConfig(
+        stack_name=stack_name,
+        trace_backend=trace_backend,
+        metrics_backend=metrics_backend,
+        services=services,
+    )
+
+    output_dir = Path.cwd() / stack_config.artifact_id
+
+    if output_dir.exists():
+        overwrite = questionary.confirm(
+            f"Directory '{stack_config.artifact_id}' already exists. Overwrite?",
+            default=False,
+        ).ask()
+        if not overwrite:
+            console.print("[yellow]Aborted.[/yellow]")
+            raise SystemExit(0)
+
+    # ------------------------------------------------------------------
+    # Generate
+    # ------------------------------------------------------------------
+
+    generator = ProjectGenerator()
+
+    console.print()
+    steps = [
+        "Generating shared observability stack (OTel Collector, Loki, Grafana)...",
+        f"Configuring {'Prometheus' if stack_config.use_prometheus else 'Mimir'} with per-service scrape targets...",
+    ]
+    if stack_config.use_tempo:
+        steps.append("Configuring Tempo trace backend...")
+    if stack_config.use_jaeger:
+        steps.append("Configuring Jaeger trace backend...")
+    if stack_config.use_zipkin:
+        steps.append("Configuring Zipkin trace backend...")
+    steps.append("Provisioning Grafana dashboards (JVM, HTTP, Logs-Traces)...")
+    for svc in services:
+        steps.append(f"Generating service [bold]{svc.artifact_id}[/bold] (port {svc.app_port})...")
+    steps.append("Writing root docker-compose.yml (Docker Compose include orchestration)...")
+    steps.append("Writing global README with quick start guide...")
+
+    for step in steps:
+        with console.status(f"[cyan]{step}[/cyan]"):
+            pass
+        console.print(f"  [green]✔[/green] {step}")
+
+    generator.generate_stack(stack_config, output_dir)
+
+    # ------------------------------------------------------------------
+    # Success output
+    # ------------------------------------------------------------------
+
+    console.print()
+    console.rule(style="green")
+
+    result = Text()
+    result.append(f"\n  ✅ Stack ready: ./{stack_config.artifact_id}\n", style="bold green")
+    console.print(result)
+    console.rule(style="green")
+    console.print()
+
+    console.print("  [bold]Structure:[/bold]")
+    console.print(f"  {stack_config.artifact_id}/")
+    console.print("  ├── obs-stack/             [dim]← shared observability[/dim]")
+    for svc in services:
+        console.print(f"  ├── {svc.artifact_id}/")
+    console.print("  ├── docker-compose.yml     [dim]← root orchestration (include:)[/dim]")
+    console.print("  └── README.md")
+    console.print()
+
+    console.print("  [bold]Quick start:[/bold]")
+    console.print(f"  $ cd {stack_config.artifact_id}")
+    console.print("  $ docker compose up -d")
+    console.print()
+
+    console.print("  [bold]Endpoints:[/bold]")
+    console.print("  Grafana    → [link]http://localhost:3000[/link]  (admin / admin)")
+    if stack_config.use_prometheus:
+        console.print("  Prometheus → [link]http://localhost:9090[/link]")
+    else:
+        console.print("  Mimir      → [link]http://localhost:9009[/link]")
+    if stack_config.use_tempo:
+        console.print("  Tempo      → [link]http://localhost:3200[/link]")
+    if stack_config.use_jaeger:
+        console.print("  Jaeger     → [link]http://localhost:16686[/link]")
+    if stack_config.use_zipkin:
+        console.print("  Zipkin     → [link]http://localhost:9411[/link]")
+    for svc in services:
+        console.print(f"  {svc.artifact_id:<12} → [link]http://localhost:{svc.app_port}/actuator/health[/link]")
     console.print()
 
     console.print(
