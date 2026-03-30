@@ -1,19 +1,28 @@
 {
   "uid": "spring-jvm",
-  "title": "Spring Boot — JVM",
-  "tags": ["spring-boot", "jvm"],
+  "title": "Spring Boot \u2014 JVM",
+  "tags": [
+    "spring-boot",
+    "jvm"
+  ],
   "schemaVersion": 39,
   "version": 1,
   "refresh": "30s",
   "graphTooltip": 1,
-  "time": { "from": "now-1h", "to": "now" },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
   "templating": {
     "list": [
       {
         "name": "service",
         "label": "Service",
         "type": "query",
-        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
         "definition": "label_values(jvm_memory_used_bytes, application)",
         "query": {
           "query": "label_values(jvm_memory_used_bytes, application)",
@@ -22,7 +31,6 @@
         "refresh": 2,
         "sort": 1,
         "multi": false,
-        "includeAll": false,
         "current": {}
       }
     ]
@@ -33,42 +41,83 @@
       "type": "row",
       "title": "Memory",
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 }
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      }
     },
     {
       "id": 2,
       "title": "Heap Memory",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 1 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 1
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "bytes",
-          "custom": { "lineWidth": 1, "fillOpacity": 10 }
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 10
+          }
         },
         "overrides": [
           {
-            "matcher": { "id": "byRegexp", "options": "Max.*" },
+            "matcher": {
+              "id": "byRegexp",
+              "options": "Max.*"
+            },
             "properties": [
-              { "id": "custom.lineStyle", "value": { "dash": [4, 4], "fill": "dash" } },
-              { "id": "custom.fillOpacity", "value": 0 }
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    4,
+                    4
+                  ],
+                  "fill": "dash"
+                }
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              }
             ]
           }
         ]
       },
       "options": {
-        "tooltip": { "mode": "multi", "sort": "desc" },
-        "legend": { "displayMode": "list", "placement": "bottom", "calcs": ["lastNotNull", "max"] }
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        },
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        }
       },
       "targets": [
         {
           "expr": "sum(jvm_memory_used_bytes{application=\"$service\", area=\"heap\"}) by (id)",
-          "legendFormat": "Used — {{id}}",
+          "legendFormat": "Used \u2014 {{id}}",
           "refId": "A"
         },
         {
           "expr": "sum(jvm_memory_max_bytes{application=\"$service\", area=\"heap\"}) by (id)",
-          "legendFormat": "Max — {{id}}",
+          "legendFormat": "Max \u2014 {{id}}",
           "refId": "B"
         }
       ]
@@ -77,17 +126,38 @@
       "id": 3,
       "title": "Non-Heap Memory",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 1 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 1
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "bytes",
-          "custom": { "lineWidth": 1, "fillOpacity": 10 }
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 10
+          }
         }
       },
       "options": {
-        "tooltip": { "mode": "multi", "sort": "desc" },
-        "legend": { "displayMode": "list", "placement": "bottom", "calcs": ["lastNotNull", "max"] }
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        },
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        }
       },
       "targets": [
         {
@@ -102,28 +172,54 @@
       "type": "row",
       "title": "Garbage Collection",
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 9 }
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 9
+      }
     },
     {
       "id": 5,
       "title": "GC Pause Duration",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 10 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 10
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "ms",
-          "custom": { "lineWidth": 1, "fillOpacity": 10 }
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 10
+          }
         }
       },
       "options": {
-        "tooltip": { "mode": "multi", "sort": "desc" },
-        "legend": { "displayMode": "list", "placement": "bottom", "calcs": ["lastNotNull", "max"] }
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        },
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        }
       },
       "targets": [
         {
           "expr": "rate(jvm_gc_pause_milliseconds_sum{application=\"$service\"}[$__rate_interval])",
-          "legendFormat": "{{action}} — {{cause}}",
+          "legendFormat": "{{action}} \u2014 {{cause}}",
           "refId": "A"
         }
       ]
@@ -132,22 +228,43 @@
       "id": 6,
       "title": "GC Collections / sec",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 10 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 10
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "ops",
-          "custom": { "lineWidth": 1, "fillOpacity": 10 }
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 10
+          }
         }
       },
       "options": {
-        "tooltip": { "mode": "multi", "sort": "desc" },
-        "legend": { "displayMode": "list", "placement": "bottom", "calcs": ["lastNotNull", "max"] }
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        },
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        }
       },
       "targets": [
         {
           "expr": "rate(jvm_gc_pause_milliseconds_count{application=\"$service\"}[$__rate_interval])",
-          "legendFormat": "{{action}} — {{cause}}",
+          "legendFormat": "{{action}} \u2014 {{cause}}",
           "refId": "A"
         }
       ]
@@ -157,33 +274,63 @@
       "type": "row",
       "title": "Threads & CPU",
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 18 }
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 18
+      }
     },
     {
       "id": 8,
       "title": "CPU Usage",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 19 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 19
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "percentunit",
           "min": 0,
           "max": 1,
-          "custom": { "lineWidth": 1, "fillOpacity": 10 },
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 10
+          },
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "green", "value": null },
-              { "color": "orange", "value": 0.7 },
-              { "color": "red", "value": 0.9 }
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.7
+              },
+              {
+                "color": "red",
+                "value": 0.9
+              }
             ]
           }
         }
       },
       "options": {
-        "tooltip": { "mode": "multi" },
-        "legend": { "displayMode": "list", "placement": "bottom" }
+        "tooltip": {
+          "mode": "multi"
+        },
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
       },
       "targets": [
         {
@@ -202,17 +349,37 @@
       "id": 9,
       "title": "Threads",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 19 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 19
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
-          "custom": { "lineWidth": 1, "fillOpacity": 10 }
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 10
+          }
         }
       },
       "options": {
-        "tooltip": { "mode": "multi" },
-        "legend": { "displayMode": "list", "placement": "bottom", "calcs": ["lastNotNull", "max"] }
+        "tooltip": {
+          "mode": "multi"
+        },
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        }
       },
       "targets": [
         {
@@ -236,17 +403,36 @@
       "id": 10,
       "title": "Loaded Classes",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 19 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 19
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
-          "custom": { "lineWidth": 1, "fillOpacity": 5 }
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 5
+          }
         }
       },
       "options": {
-        "tooltip": { "mode": "multi" },
-        "legend": { "displayMode": "list", "placement": "bottom", "calcs": ["lastNotNull"] }
+        "tooltip": {
+          "mode": "multi"
+        },
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
       },
       "targets": [
         {

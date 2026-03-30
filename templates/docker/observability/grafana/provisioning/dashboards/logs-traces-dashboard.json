@@ -1,19 +1,29 @@
 {
   "uid": "spring-logs-traces",
-  "title": "Spring Boot — Logs & Traces",
-  "tags": ["spring-boot", "logs", "traces"],
+  "title": "Spring Boot \u2014 Logs & Traces",
+  "tags": [
+    "spring-boot",
+    "logs",
+    "traces"
+  ],
   "schemaVersion": 39,
   "version": 1,
   "refresh": "30s",
   "graphTooltip": 1,
-  "time": { "from": "now-1h", "to": "now" },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
   "templating": {
     "list": [
       {
         "name": "service",
         "label": "Service",
         "type": "query",
-        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
         "definition": "label_values(jvm_memory_used_bytes, application)",
         "query": {
           "query": "label_values(jvm_memory_used_bytes, application)",
@@ -22,7 +32,6 @@
         "refresh": 2,
         "sort": 1,
         "multi": false,
-        "includeAll": false,
         "current": {}
       },
       {
@@ -31,11 +40,27 @@
         "type": "custom",
         "query": "ERROR,WARN,INFO,DEBUG",
         "options": [
-          { "text": "All", "value": "$__all", "selected": true },
-          { "text": "ERROR", "value": "ERROR" },
-          { "text": "WARN", "value": "WARN" },
-          { "text": "INFO", "value": "INFO" },
-          { "text": "DEBUG", "value": "DEBUG" }
+          {
+            "text": "All",
+            "value": "$__all",
+            "selected": true
+          },
+          {
+            "text": "ERROR",
+            "value": "ERROR"
+          },
+          {
+            "text": "WARN",
+            "value": "WARN"
+          },
+          {
+            "text": "INFO",
+            "value": "INFO"
+          },
+          {
+            "text": "DEBUG",
+            "value": "DEBUG"
+          }
         ],
         "multi": true,
         "includeAll": true,
@@ -49,37 +74,94 @@
       "type": "row",
       "title": "Overview",
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 }
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      }
     },
     {
       "id": 2,
       "title": "Log Rate par niveau",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 16, "x": 0, "y": 1 },
-      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": {
+        "h": 8,
+        "w": 16,
+        "x": 0,
+        "y": 1
+      },
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "short",
-          "custom": { "lineWidth": 1, "fillOpacity": 10 }
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 10
+          }
         },
         "overrides": [
           {
-            "matcher": { "id": "byName", "options": "ERROR" },
-            "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }]
+            "matcher": {
+              "id": "byName",
+              "options": "ERROR"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
           },
           {
-            "matcher": { "id": "byName", "options": "WARN" },
-            "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }]
+            "matcher": {
+              "id": "byName",
+              "options": "WARN"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "orange",
+                  "mode": "fixed"
+                }
+              }
+            ]
           },
           {
-            "matcher": { "id": "byName", "options": "INFO" },
-            "properties": [{ "id": "color", "value": { "fixedColor": "blue", "mode": "fixed" } }]
+            "matcher": {
+              "id": "byName",
+              "options": "INFO"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
           }
         ]
       },
       "options": {
-        "tooltip": { "mode": "multi" },
-        "legend": { "displayMode": "list", "placement": "bottom", "calcs": ["sum"] }
+        "tooltip": {
+          "mode": "multi"
+        },
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "sum"
+          ]
+        }
       },
       "targets": [
         {
@@ -93,29 +175,75 @@
       "id": 3,
       "title": "Distribution par niveau",
       "type": "piechart",
-      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 1 },
-      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 1
+      },
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
       "fieldConfig": {
         "defaults": {},
         "overrides": [
           {
-            "matcher": { "id": "byName", "options": "Value #ERROR" },
-            "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }]
+            "matcher": {
+              "id": "byName",
+              "options": "Value #ERROR"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
           },
           {
-            "matcher": { "id": "byName", "options": "Value #WARN" },
-            "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }]
+            "matcher": {
+              "id": "byName",
+              "options": "Value #WARN"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "orange",
+                  "mode": "fixed"
+                }
+              }
+            ]
           },
           {
-            "matcher": { "id": "byName", "options": "Value #INFO" },
-            "properties": [{ "id": "color", "value": { "fixedColor": "blue", "mode": "fixed" } }]
+            "matcher": {
+              "id": "byName",
+              "options": "Value #INFO"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
           }
         ]
       },
       "options": {
         "pieType": "donut",
-        "legend": { "displayMode": "list", "placement": "right" },
-        "tooltip": { "mode": "single" }
+        "legend": {
+          "displayMode": "list",
+          "placement": "right"
+        },
+        "tooltip": {
+          "mode": "single"
+        }
       },
       "targets": [
         {
@@ -143,15 +271,31 @@
       "type": "row",
       "title": "Log Stream",
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 9 }
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 9
+      }
     },
     {
       "id": 5,
-      "title": "Logs — cliquer sur un trace_id pour ouvrir Tempo",
+      "title": "Logs \u2014 cliquer sur un trace_id pour ouvrir Tempo",
       "type": "logs",
-      "gridPos": { "h": 20, "w": 24, "x": 0, "y": 10 },
-      "datasource": { "type": "loki", "uid": "loki" },
-      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "gridPos": {
+        "h": 20,
+        "w": 24,
+        "x": 0,
+        "y": 10
+      },
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
       "options": {
         "dedupStrategy": "none",
         "enableLogDetails": true,
