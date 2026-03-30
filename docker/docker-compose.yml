@@ -174,7 +174,7 @@ services:
     restart: unless-stopped
 
   mimir:
-    image: grafana/mimir:2.15.0
+    image: grafana/mimir-alpine:2.15.0
     container_name: mimir
     ports:
       - "9009:9009"   # HTTP API + remote_write + OTLP

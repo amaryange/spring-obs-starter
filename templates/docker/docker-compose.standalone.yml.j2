@@ -126,7 +126,7 @@ services:
     restart: unless-stopped
 {% else %}
   mimir:
-    image: grafana/mimir:2.15.0
+    image: grafana/mimir-alpine:2.15.0
     container_name: mimir
     ports:
       - "9009:9009"
@@ -134,11 +134,10 @@ services:
       - ./observability/mimir/mimir.yml:/etc/mimir/mimir.yml:ro
       - mimir_data:/data/mimir
     command: -config.file=/etc/mimir/mimir.yml
+    # grafana/mimir is a distroless image (no shell/wget/curl).
+    # Downstream services use service_started and handle retries natively.
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9009/ready"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
+      disable: true
     restart: unless-stopped
 {% endif %}
 
