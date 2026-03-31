@@ -38,10 +38,15 @@ docker compose up -d
 | App        | http://localhost:8080/actuator/health |
 | Grafana    | http://localhost:3000  (admin / **changeme in production**) |
 | Prometheus | http://localhost:9090  |
-{% if config.use_tempo %}| Tempo      | http://localhost:3200  |
-{% endif %}{% if config.use_jaeger %}| Jaeger     | http://localhost:16686 |
-{% endif %}{% if config.use_zipkin %}| Zipkin     | http://localhost:9411  |
-{% endif %}
+{%- if config.use_tempo %}
+| Tempo      | http://localhost:3200  |
+{%- endif %}
+{%- if config.use_jaeger %}
+| Jaeger     | http://localhost:16686 |
+{%- endif %}
+{%- if config.use_zipkin %}
+| Zipkin     | http://localhost:9411  |
+{%- endif %}
 {% endif %}
 ## Key design decisions
 

@@ -41,25 +41,25 @@ curl http://localhost:{{ svc.app_port }}/actuator/health  # {{ svc.artifact_id }
 | Service | URL |
 |---------|-----|
 | Grafana | http://localhost:3000  *(admin / admin — change in prod!)* |
-{% if stack.use_prometheus %}
+{%- if stack.use_prometheus %}
 | Prometheus | http://localhost:9090 |
-{% else %}
+{%- else %}
 | Mimir | http://localhost:9009 |
-{% endif %}
-{% if stack.use_tempo %}
+{%- endif %}
+{%- if stack.use_tempo %}
 | Tempo | http://localhost:3200 |
-{% endif %}
-{% if stack.use_jaeger %}
+{%- endif %}
+{%- if stack.use_jaeger %}
 | Jaeger | http://localhost:16686 |
-{% endif %}
-{% if stack.use_zipkin %}
+{%- endif %}
+{%- if stack.use_zipkin %}
 | Zipkin | http://localhost:9411 |
-{% endif %}
+{%- endif %}
 | Loki | http://localhost:3100 |
 | OTel Collector | http://localhost:4318  *(OTLP HTTP)* |
-{% for svc in stack.services %}
+{%- for svc in stack.services %}
 | {{ svc.artifact_id }} | http://localhost:{{ svc.app_port }}/actuator/health |
-{% endfor %}
+{%- endfor %}
 
 ---
 
