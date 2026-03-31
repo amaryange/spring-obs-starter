@@ -91,6 +91,36 @@ What each panel needs:
 | In-flight Requests | Concurrent calls (the `&` on slow endpoint) |
 | Responses by status | Mix of 200, 201, 404, 500 |
 
+---
+
+### JVM Dashboard
+
+Populated **automatically** as soon as the app starts — no traffic needed.
+
+| Panel | What generates data |
+|-------|-------------------|
+| Heap Memory | JVM allocates memory at startup |
+| Non-Heap Memory | Class loading, metaspace — active from startup |
+| GC Pause Duration | Any object allocation triggers GC eventually; HTTP traffic accelerates it |
+| GC Collections/sec | Same as above |
+| CPU Usage | App startup + any request processing |
+| Threads | Spring MVC creates threads per request; visible under load |
+| Loaded Classes | Stable after startup — spikes during first requests (lazy loading) |
+
+---
+
+### Logs & Traces Dashboard
+
+| Panel | What generates data |
+|-------|-------------------|
+| Log Rate (INFO) | Any request handled by the app |
+| Log Rate (WARN) | 404s and out-of-stock responses — any `log.warn(...)` call |
+| Log Rate (ERROR) | Calls to `/orders/error` — any `log.error(...)` call |
+| Log viewer | All of the above — each line has a `trace_id` |
+| Trace link | Click a `trace_id` in the log viewer → opens the span directly in {% if config.use_tempo %}Tempo{% elif config.use_jaeger %}Jaeger{% else %}the trace backend{% endif %} |
+
+> The trace correlation works because `OtelLogbackInstaller` injects the active `trace_id` into every log line. Without it, the link to {% if config.use_tempo %}Tempo{% elif config.use_jaeger %}Jaeger{% else %}the trace backend{% endif %} would be broken.
+
 {% endif %}
 ## Key design decisions
 
