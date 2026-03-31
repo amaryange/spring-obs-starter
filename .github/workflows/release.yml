@@ -1,4 +1,4 @@
-name: Release binaries
+name: Release
 
 on:
   push:
@@ -9,8 +9,9 @@ permissions:
   contents: write
 
 jobs:
-  build:
-    name: Build — ${{ matrix.os }} / ${{ matrix.arch }}
+  # ── 1. CLI binaries (cross-platform) ────────────────────────────────────────
+  build-cli:
+    name: Build CLI — ${{ matrix.os }} / ${{ matrix.arch }}
     runs-on: ${{ matrix.runner }}
     strategy:
       matrix:
@@ -74,17 +75,51 @@ jobs:
           name: ${{ matrix.asset }}
           path: dist/${{ matrix.asset }}
 
-  release:
-    name: Create GitHub Release
-    needs: build
+  # ── 2. Pre-built obs-stack archives ─────────────────────────────────────────
+  build-obs-stacks:
+    name: Build obs-stack archives
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download all artifacts
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -e .
+
+      - name: Generate obs-stack archives
+        run: python scripts/build_obs_stacks.py
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: obs-stacks
+          path: dist/obs-stacks/*.tar.gz
+
+  # ── 3. GitHub Release ────────────────────────────────────────────────────────
+  release:
+    name: Create GitHub Release
+    needs: [build-cli, build-obs-stacks]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download CLI artifacts
         uses: actions/download-artifact@v4
         with:
-          path: dist/
+          pattern: sbo-*
+          path: dist/cli/
+          merge-multiple: true
+
+      - name: Download obs-stack artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: obs-stacks
+          path: dist/obs-stacks/
 
       - name: Create release
         uses: softprops/action-gh-release@v2
@@ -92,7 +127,7 @@ jobs:
           tag_name: ${{ github.ref_name }}
           name: "sbo ${{ github.ref_name }}"
           body: |
-            ## Installation
+            ## Install the CLI
 
             ```bash
             curl -fsSL https://raw.githubusercontent.com/amaryange/spring-obs-starter/main/install.sh | bash
@@ -100,6 +135,22 @@ jobs:
 
             Or download the binary for your platform below and add it to your `PATH`.
 
-            ## Checksums
-          files: dist/**/*
+            ## Pre-built observability stacks
+
+            Ready-to-use obs stacks for multi-service setups — no generator needed:
+
+            | Archive | Backends |
+            |---------|----------|
+            | `obs-stack-tempo-prometheus.tar.gz` | Tempo + Prometheus *(recommended)* |
+            | `obs-stack-tempo-mimir.tar.gz` | Tempo + Mimir |
+            | `obs-stack-jaeger-prometheus.tar.gz` | Jaeger + Prometheus |
+            | `obs-stack-zipkin-prometheus.tar.gz` | Zipkin + Prometheus |
+
+            ```bash
+            tar xzf obs-stack-tempo-prometheus.tar.gz
+            cd obs-stack-tempo-prometheus && docker compose up -d
+            ```
+          files: |
+            dist/cli/*
+            dist/obs-stacks/*
           generate_release_notes: true

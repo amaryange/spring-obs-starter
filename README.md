@@ -99,7 +99,7 @@ Add `--demo` to include working example code (see [Demo mode](#demo-mode) below)
 
 | Question | Options |
 |----------|---------|
-| Build tool | Maven *(recommended)*, Gradle Kotlin DSL, Gradle Groovy DSL |
+| Build tool | Maven *(recommended)*, Gradle Kotlin DSL |
 | Java version | 21 LTS *(recommended)*, 17 LTS |
 | Trace backend | Tempo *(recommended)*, Jaeger, Zipkin, Tempo + Jaeger |
 | Deployment mode | Standalone, Multi-service |
@@ -110,13 +110,13 @@ Add `--demo` to include working example code (see [Demo mode](#demo-mode) below)
 **Deployment modes:**
 
 - **Standalone** — the generated project embeds its own complete observability stack (OTel Collector + metrics + Loki + Grafana). Ideal for solo development or demos.
-- **Multi-service** — the project only contains the application. It connects to a shared observability stack launched via `sbo init-obs`.
+- **Multi-service** — the project contains only the application. It connects to a shared observability stack via `obs-network` (see [Multi-service architecture](#multi-service-architecture) below).
 
 **Generated output:**
 
 ```
 payment-service/
-├── pom.xml                              # or build.gradle.kts / build.gradle
+├── pom.xml                              # or build.gradle.kts
 ├── mvnw  mvnw.cmd                       # or gradlew / gradlew.bat
 ├── .mvn/wrapper/                        # or gradle/wrapper/
 ├── Dockerfile
@@ -199,48 +199,79 @@ curl http://localhost:8080/api/v1/payment/settle/1
 
 ---
 
-#### `sbo init-obs`
+#### `sbo create-stack <stack-name>`
 
-Generates a **shared observability stack** for multi-service architectures.
-Run once, then connect as many services as needed.
+Generates a complete multi-service monorepo in one shot: a shared observability stack + N Spring Boot services, all wired together.
 
 ```bash
-sbo init-obs
+sbo create-stack my-platform
 ```
 
 **Interactive questions:**
 
 | Question | Options |
 |----------|---------|
-| Trace backend | Tempo, Jaeger, Zipkin, Tempo + Jaeger |
-| Metrics backend | Prometheus, Mimir |
-| Output directory | `obs-stack` *(default)* |
+| Build tool | Maven *(recommended)*, Gradle Kotlin DSL |
+| Java version | 21 LTS *(recommended)*, 17 LTS |
+| Trace backend | Tempo *(recommended)*, Jaeger, Zipkin, Tempo + Jaeger |
+| Metrics backend | Prometheus *(recommended)*, Mimir |
+| Number of services | 1–20 |
+| Per-service: name, database, package | — |
+| `--demo` | Include demo controllers in each service |
 
 **Generated output:**
 
 ```
-obs-stack/
-├── docker-compose.yml         # all backends + obs-network
-└── observability/
-    ├── otel-collector/otel-collector.yml
-    ├── prometheus/prometheus.yml
-    ├── loki/loki.yml
-    ├── tempo/tempo.yml
-    └── grafana/provisioning/
+my-platform/
+├── obs-stack/                 # shared observability (OTel Collector, Loki, Grafana, …)
+├── payment-service/           # Spring Boot app (multi-service mode)
+├── order-api/                 # Spring Boot app (multi-service mode)
+├── docker-compose.yml         # root orchestration (Docker Compose include:)
+└── README.md
 ```
 
 **Quick start:**
 
 ```bash
-cd obs-stack
+cd my-platform
 docker compose up -d
 ```
 
-All services that join `obs-network` will automatically route their telemetry to this stack.
+Services are assigned sequential ports starting from `8080`.
 
 ---
 
 ### Multi-service architecture
+
+For setups where multiple services share a single observability stack, you have two options:
+
+**Option A — `sbo create-stack`** *(recommended)*
+Generates everything in one shot. See [`sbo create-stack`](#sbo-create-stack-stack-name) above.
+
+**Option B — Download a pre-built obs stack + connect services manually**
+
+Download a ready-to-use obs stack from [GitHub Releases](https://github.com/amaryange/spring-obs-starter/releases/latest):
+
+| Archive | Backends |
+|---------|----------|
+| `obs-stack-tempo-prometheus.tar.gz` | Tempo + Prometheus *(recommended)* |
+| `obs-stack-tempo-mimir.tar.gz` | Tempo + Mimir |
+| `obs-stack-jaeger-prometheus.tar.gz` | Jaeger + Prometheus |
+| `obs-stack-zipkin-prometheus.tar.gz` | Zipkin + Prometheus |
+
+```bash
+# 1. Extract and start the shared obs stack
+tar xzf obs-stack-tempo-prometheus.tar.gz
+cd obs-stack && docker compose up -d
+
+# 2. Generate services (choose Multi-service mode)
+sbo create payment-service   # choose: Multi-service
+sbo create order-api         # choose: Multi-service
+
+# 3. Start each service
+cd payment-service && docker compose -f docker/docker-compose.yml up -d
+cd order-api       && docker compose -f docker/docker-compose.yml up -d
+```
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -265,24 +296,6 @@ All services that join `obs-network` will automatically route their telemetry to
 │                          └─────────────────────┘            │
 └─────────────────────────────────────────────────────────────┘
 ```
-
-**Setup:**
-
-```bash
-# 1. Start the shared obs stack
-sbo init-obs
-cd obs-stack && docker compose up -d
-
-# 2. Generate services (multi-service mode)
-sbo create payment-service   # choose: Multi-service
-sbo create order-api         # choose: Multi-service
-
-# 3. Start each service
-cd payment-service && APP_PORT=8080 docker compose -f docker/docker-compose.yml up -d
-cd order-api       && APP_PORT=8081 docker compose -f docker/docker-compose.yml up -d
-```
-
-> Use `APP_PORT` to assign a unique host port to each service and avoid conflicts.
 
 ---
 
@@ -405,7 +418,7 @@ Ajoutez `--demo` pour inclure du code d'exemple (voir [Mode demo](#mode-demo) ci
 
 | Question | Options |
 |----------|---------|
-| Outil de build | Maven *(recommandé)*, Gradle Kotlin DSL, Gradle Groovy DSL |
+| Outil de build | Maven *(recommandé)*, Gradle Kotlin DSL |
 | Version Java | 21 LTS *(recommandé)*, 17 LTS |
 | Backend de traces | Tempo *(recommandé)*, Jaeger, Zipkin, Tempo + Jaeger |
 | Mode de déploiement | Standalone, Multi-service |
@@ -416,7 +429,7 @@ Ajoutez `--demo` pour inclure du code d'exemple (voir [Mode demo](#mode-demo) ci
 **Modes de déploiement :**
 
 - **Standalone** — le projet embarque sa propre stack d'observabilité complète (OTel Collector + métriques + Loki + Grafana). Idéal pour le développement solo ou les démos.
-- **Multi-service** — le projet contient uniquement l'application. Il se connecte à une stack d'observabilité partagée lancée via `sbo init-obs`.
+- **Multi-service** — le projet contient uniquement l'application. Il se connecte à une stack d'observabilité partagée via `obs-network` (voir [Architecture multi-service](#architecture-multi-service) ci-dessous).
 
 **Démarrage rapide :**
 
@@ -478,35 +491,79 @@ curl http://localhost:8080/api/v1/payment/settle/1
 
 ---
 
-#### `sbo init-obs`
+#### `sbo create-stack <nom-du-stack>`
 
-Génère une **stack d'observabilité partagée** pour les architectures multi-services.
-À lancer une seule fois, puis connecter autant de services que nécessaire.
+Génère un monorepo multi-services complet en une seule commande : une stack d'observabilité partagée + N services Spring Boot, tout câblé ensemble.
 
 ```bash
-sbo init-obs
+sbo create-stack my-platform
 ```
 
 **Questions interactives :**
 
 | Question | Options |
 |----------|---------|
-| Backend de traces | Tempo, Jaeger, Zipkin, Tempo + Jaeger |
-| Backend de métriques | Prometheus, Mimir |
-| Dossier de sortie | `obs-stack` *(par défaut)* |
+| Outil de build | Maven *(recommandé)*, Gradle Kotlin DSL |
+| Version Java | 21 LTS *(recommandé)*, 17 LTS |
+| Backend de traces | Tempo *(recommandé)*, Jaeger, Zipkin, Tempo + Jaeger |
+| Backend de métriques | Prometheus *(recommandé)*, Mimir |
+| Nombre de services | 1–20 |
+| Par service : nom, base de données, package | — |
+| `--demo` | Inclure les controllers de démo dans chaque service |
+
+**Structure générée :**
+
+```
+my-platform/
+├── obs-stack/                 # observabilité partagée (OTel Collector, Loki, Grafana, …)
+├── payment-service/           # app Spring Boot (mode multi-service)
+├── order-api/                 # app Spring Boot (mode multi-service)
+├── docker-compose.yml         # orchestration racine (Docker Compose include:)
+└── README.md
+```
 
 **Démarrage rapide :**
 
 ```bash
-cd obs-stack
+cd my-platform
 docker compose up -d
 ```
 
-Tous les services rejoignant `obs-network` routeront automatiquement leur télémétrie vers cette stack.
+Les services se voient attribuer des ports séquentiels à partir de `8080`.
 
 ---
 
 ### Architecture multi-service
+
+Pour les setups où plusieurs services partagent une même stack d'observabilité, deux options :
+
+**Option A — `sbo create-stack`** *(recommandé)*
+Génère tout en une seule commande. Voir [`sbo create-stack`](#sbo-create-stack-nom-du-stack) ci-dessus.
+
+**Option B — Télécharger une obs-stack prébuilt + connecter les services manuellement**
+
+Télécharger une obs-stack prête à l'emploi depuis [GitHub Releases](https://github.com/amaryange/spring-obs-starter/releases/latest) :
+
+| Archive | Backends |
+|---------|----------|
+| `obs-stack-tempo-prometheus.tar.gz` | Tempo + Prometheus *(recommandé)* |
+| `obs-stack-tempo-mimir.tar.gz` | Tempo + Mimir |
+| `obs-stack-jaeger-prometheus.tar.gz` | Jaeger + Prometheus |
+| `obs-stack-zipkin-prometheus.tar.gz` | Zipkin + Prometheus |
+
+```bash
+# 1. Extraire et démarrer la stack obs partagée
+tar xzf obs-stack-tempo-prometheus.tar.gz
+cd obs-stack && docker compose up -d
+
+# 2. Générer les services (choisir le mode Multi-service)
+sbo create payment-service   # choisir : Multi-service
+sbo create order-api         # choisir : Multi-service
+
+# 3. Démarrer chaque service
+cd payment-service && docker compose -f docker/docker-compose.yml up -d
+cd order-api       && docker compose -f docker/docker-compose.yml up -d
+```
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -531,24 +588,6 @@ Tous les services rejoignant `obs-network` routeront automatiquement leur télé
 │                          └─────────────────────┘            │
 └─────────────────────────────────────────────────────────────┘
 ```
-
-**Mise en place :**
-
-```bash
-# 1. Lancer la stack obs partagée
-sbo init-obs
-cd obs-stack && docker compose up -d
-
-# 2. Générer les services (mode multi-service)
-sbo create payment-service   # choisir : Multi-service
-sbo create order-api         # choisir : Multi-service
-
-# 3. Démarrer chaque service
-cd payment-service && APP_PORT=8080 docker compose -f docker/docker-compose.yml up -d
-cd order-api       && APP_PORT=8081 docker compose -f docker/docker-compose.yml up -d
-```
-
-> Utilisez `APP_PORT` pour assigner un port hôte unique à chaque service et éviter les conflits.
 
 ---
 
