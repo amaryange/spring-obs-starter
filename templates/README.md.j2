@@ -56,6 +56,92 @@ docker compose up -d
   Add your migrations to `src/main/resources/db/migration/`.
 {% endif %}
 
+## Observability & resilience patterns
+
+### `@Observed` — automatic span + metric per method
+
+Add `@Observed` on any Spring-managed bean method. Spring Boot 4 automatically creates:
+- a **span** in Tempo (visible in the trace waterfall)
+- a **Micrometer timer** (histogram) exported to Prometheus/Mimir — queryable as `p50/p95/p99` latency in Grafana
+
+```java
+import io.micrometer.observation.annotation.Observed;
+
+@Service
+public class OrderService {
+
+    @Observed(name = "order.find", contextualName = "finding-order-by-id")
+    public Order findById(Long id) { ... }
+}
+```
+
+`name` → metric name (`order.find.seconds`). `contextualName` → span name in Tempo.
+
+> **Requirement:** the class must be a Spring bean (`@Service`, `@Component`, `@Repository`) — `@Observed` on a plain object has no effect.
+
+---
+
+### `@Retryable` — automatic retry with backoff
+
+Retries the method on the specified exception, up to `maxAttempts` times, with exponential backoff.
+The `@Observed` span covers the **entire attempt sequence**, so you see the full latency including retries in Tempo.
+
+```java
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
+import org.springframework.retry.annotation.Recover;
+
+@Observed(name = "payment.authorize", contextualName = "authorizing-payment")
+@Retryable(
+    retryFor  = PaymentGatewayException.class,
+    maxAttempts = 3,
+    backoff   = @Backoff(delay = 100, multiplier = 2, maxDelay = 500)
+)
+public PaymentResult authorize(Long orderId, BigDecimal amount) { ... }
+
+// Called automatically after all retries are exhausted
+@Recover
+public PaymentResult authorizeRecover(PaymentGatewayException ex, Long orderId, BigDecimal amount) {
+    return new PaymentResult(orderId, null, "FAILED");
+}
+```
+
+> **Requirement:** `@EnableRetry` must be active. Add it once per application via a `@Configuration` class:
+> ```java
+> @Configuration
+> @EnableRetry
+> public class ResilienceConfig {}
+> ```
+
+---
+
+### `@CircuitBreaker` — circuit breaker with fallback
+
+After repeated failures within `openTimeout` ms, the circuit **opens** and all calls go directly to the `@Recover` fallback for `resetTimeout` ms — no further calls to the external service.
+
+```java
+import org.springframework.retry.annotation.CircuitBreaker;
+import org.springframework.retry.annotation.Recover;
+
+@Observed(name = "payment.settle", contextualName = "settling-payment")
+@CircuitBreaker(
+    include      = PaymentGatewayException.class,
+    openTimeout  = 5_000L,   // circuit opens after failures within 5s
+    resetTimeout = 20_000L   // circuit stays open for 20s, then half-opens
+)
+public PaymentResult settle(Long orderId) { ... }
+
+@Recover
+public PaymentResult settleRecover(PaymentGatewayException ex, Long orderId) {
+    log.error("Circuit open — orderId={}", orderId);
+    return new PaymentResult(orderId, null, "CIRCUIT_OPEN");
+}
+```
+
+> **Note:** `@CircuitBreaker` is from `spring-retry`, not Resilience4j. It is simpler and sufficient for most use cases. For advanced features (half-open probing, per-instance state), switch to `resilience4j-spring-boot3`.
+
+---
+
 ## Environment variables
 
 | Variable                     | Default                         | Description                        |

@@ -1,7 +1,7 @@
 name: {{ config.artifact_id }}
 
 services:
-  app:
+  {{ config.artifact_id }}:
     build:
       context: ..
     container_name: {{ config.artifact_id }}
@@ -19,6 +19,11 @@ services:
 {% elif config.database.value == 'mysql' %}
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/{{ config.artifact_id | replace('-', '_') }}?useSSL=false&serverTimezone=UTC
       - DB_USERNAME=app
+      - DB_PASSWORD=changeme
+{% elif config.database.value == 'oracle' %}
+      # Oracle: point to your own instance — no Oracle container is provided
+      - SPRING_DATASOURCE_URL=jdbc:oracle:thin:@${DB_HOST:localhost}:${DB_PORT:1521}/${DB_SERVICE:xe}
+      - DB_USERNAME=system
       - DB_PASSWORD=changeme
 {% endif %}
 {% if config.database.value in ('postgresql', 'mysql') %}
