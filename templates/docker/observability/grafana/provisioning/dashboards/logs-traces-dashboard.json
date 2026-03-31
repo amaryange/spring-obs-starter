@@ -29,10 +29,14 @@
           "query": "label_values(jvm_memory_used_bytes, application)",
           "refId": "StandardVariableQuery"
         },
-        "refresh": 2,
+        "refresh": 1,
         "sort": 1,
         "multi": false,
-        "current": {}
+        "current": {
+          "selected": false,
+          "text": "",
+          "value": ""
+        }
       },
       {
         "name": "level",
