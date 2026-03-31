@@ -26,12 +26,6 @@ OTEL_DEPS_GRADLE_KOTLIN = [
     'implementation("io.opentelemetry.instrumentation:opentelemetry-logback-appender-1.0:2.21.0-alpha")',
 ]
 
-OTEL_DEPS_GRADLE_GROOVY = [
-    "implementation 'org.springframework.boot:spring-boot-starter-opentelemetry'",
-    "implementation 'org.springframework.boot:spring-boot-starter-aspectj'",
-    "implementation 'io.opentelemetry.instrumentation:opentelemetry-logback-appender-1.0:2.21.0-alpha'",
-]
-
 # ---------------------------------------------------------------------------
 # Maven pom.xml
 # ---------------------------------------------------------------------------
@@ -113,29 +107,12 @@ def patch_gradle_kotlin(build_path: Path) -> list[str]:
     return added
 
 
-def patch_gradle_groovy(build_path: Path) -> list[str]:
-    content = build_path.read_text(encoding="utf-8")
-    added: list[str] = []
-
-    for dep in OTEL_DEPS_GRADLE_GROOVY:
-        artifact = dep.split(":")[1].strip("'")
-        if artifact in content:
-            continue
-        content = _insert_into_dependencies_block(content, f"    {dep}")
-        added.append(artifact)
-
-    if added:
-        build_path.write_text(content, encoding="utf-8")
-    return added
-
 
 def patch_build_file(project_path: Path, build_tool: BuildTool) -> list[str]:
     if build_tool == BuildTool.MAVEN:
         return patch_pom_xml(project_path / "pom.xml")
-    elif build_tool == BuildTool.GRADLE_KOTLIN:
-        return patch_gradle_kotlin(project_path / "build.gradle.kts")
     else:
-        return patch_gradle_groovy(project_path / "build.gradle")
+        return patch_gradle_kotlin(project_path / "build.gradle.kts")
 
 
 # ---------------------------------------------------------------------------

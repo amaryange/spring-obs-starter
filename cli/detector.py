@@ -13,8 +13,6 @@ def detect_build_tool(project_path: Path) -> BuildTool | None:
         return BuildTool.MAVEN
     if (project_path / "build.gradle.kts").exists():
         return BuildTool.GRADLE_KOTLIN
-    if (project_path / "build.gradle").exists():
-        return BuildTool.GRADLE_GROOVY
     return None
 
 
@@ -34,12 +32,6 @@ def detect_service_name(project_path: Path, build_tool: BuildTool) -> str:
                 m = re.search(r'rootProject\.name\s*=\s*"([^"]+)"', settings.read_text(encoding="utf-8"))
                 if m:
                     return m.group(1)
-        elif build_tool == BuildTool.GRADLE_GROOVY:
-            settings = project_path / "settings.gradle"
-            if settings.exists():
-                m = re.search(r'rootProject\.name\s*=\s*["\']([^"\']+)["\']', settings.read_text(encoding="utf-8"))
-                if m:
-                    return m.group(1)
     except OSError:
         pass
     return project_path.name
@@ -54,7 +46,7 @@ def detect_java_version(project_path: Path, build_tool: BuildTool) -> JavaVersio
                 if m:
                     return JavaVersion.V17 if m.group(1) == "17" else JavaVersion.V21
         else:
-            fname = "build.gradle.kts" if build_tool == BuildTool.GRADLE_KOTLIN else "build.gradle"
+            fname = "build.gradle.kts"
             content = (project_path / fname).read_text(encoding="utf-8")
             for pattern in [r"VERSION_(\d+)", r"sourceCompatibility\s*=\s*[\"']?(\d+)"]:
                 m = re.search(pattern, content)
@@ -77,7 +69,7 @@ def detect_spring_boot_version(project_path: Path, build_tool: BuildTool) -> str
             if m:
                 return m.group(1).strip()
         else:
-            fname = "build.gradle.kts" if build_tool == BuildTool.GRADLE_KOTLIN else "build.gradle"
+            fname = "build.gradle.kts"
             content = (project_path / fname).read_text(encoding="utf-8")
             m = re.search(r'id\s*\(\s*"org\.springframework\.boot"\s*\)\s*version\s*"([^"]+)"', content)
             if not m:
@@ -110,7 +102,7 @@ def has_dependency(project_path: Path, build_tool: BuildTool, artifact_id: str) 
     try:
         if build_tool == BuildTool.MAVEN:
             return artifact_id in (project_path / "pom.xml").read_text(encoding="utf-8")
-        fname = "build.gradle.kts" if build_tool == BuildTool.GRADLE_KOTLIN else "build.gradle"
+        fname = "build.gradle.kts"
         return artifact_id in (project_path / fname).read_text(encoding="utf-8")
     except OSError:
         return False
@@ -123,7 +115,7 @@ def detect_database(project_path: Path, build_tool: BuildTool) -> "Database":
         if build_tool == BuildTool.MAVEN:
             content = (project_path / "pom.xml").read_text(encoding="utf-8")
         else:
-            fname = "build.gradle.kts" if build_tool == BuildTool.GRADLE_KOTLIN else "build.gradle"
+            fname = "build.gradle.kts"
             content = (project_path / fname).read_text(encoding="utf-8")
     except OSError:
         return Database.NONE

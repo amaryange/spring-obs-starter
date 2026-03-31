@@ -102,7 +102,6 @@ def create(service_name: str, demo: bool) -> None:
         choices=[
             questionary.Choice("Maven (recommended)", BuildTool.MAVEN),
             questionary.Choice("Gradle — Kotlin DSL", BuildTool.GRADLE_KOTLIN),
-            questionary.Choice("Gradle — Groovy DSL", BuildTool.GRADLE_GROOVY),
         ],
     ).ask()
 
@@ -491,7 +490,6 @@ def create_stack(stack_name: str, demo: bool) -> None:
             choices=[
                 questionary.Choice("Maven (recommended)", BuildTool.MAVEN),
                 questionary.Choice("Gradle — Kotlin DSL", BuildTool.GRADLE_KOTLIN),
-                questionary.Choice("Gradle — Groovy DSL", BuildTool.GRADLE_GROOVY),
             ],
         ).ask()
 

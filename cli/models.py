@@ -41,7 +41,6 @@ class MetricsBackend(str, Enum):
 class BuildTool(str, Enum):
     MAVEN = "maven"
     GRADLE_KOTLIN = "gradle-kotlin"
-    GRADLE_GROOVY = "gradle-groovy"
 
 
 class Extra(str, Enum):
@@ -124,7 +123,7 @@ class ProjectConfig:
 
     @property
     def use_gradle(self) -> bool:
-        return self.build_tool in (BuildTool.GRADLE_KOTLIN, BuildTool.GRADLE_GROOVY)
+        return self.build_tool == BuildTool.GRADLE_KOTLIN
 
     @property
     def use_gradle_kotlin(self) -> bool:

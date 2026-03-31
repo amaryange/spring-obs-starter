@@ -88,17 +88,6 @@ class ProjectGenerator:
                 ("spring-boot/4.0/wrapper/gradle/gradle/wrapper/gradle-wrapper.jar",
                  "gradle/wrapper/gradle-wrapper.jar"),
             ]
-        else:  # Gradle Groovy
-            files += [
-                ("spring-boot/4.0/build.gradle.j2", "build.gradle"),
-                ("spring-boot/4.0/settings.gradle.j2", "settings.gradle"),
-                ("spring-boot/4.0/wrapper/gradle/gradlew", "gradlew"),
-                ("spring-boot/4.0/wrapper/gradle/gradlew.bat", "gradlew.bat"),
-                ("spring-boot/4.0/wrapper/gradle/gradle/wrapper/gradle-wrapper.properties",
-                 "gradle/wrapper/gradle-wrapper.properties"),
-                ("spring-boot/4.0/wrapper/gradle/gradle/wrapper/gradle-wrapper.jar",
-                 "gradle/wrapper/gradle-wrapper.jar"),
-            ]
 
         # --- Dockerfile ---
         files.append(("spring-boot/4.0/Dockerfile.j2", "Dockerfile"))
