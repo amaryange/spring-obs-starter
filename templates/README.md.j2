@@ -48,6 +48,50 @@ docker compose up -d
 | Zipkin     | http://localhost:9411  |
 {%- endif %}
 {% endif %}
+{% if config.use_docker %}
+## Populate the Grafana dashboards
+
+The dashboards need real HTTP traffic to display data. Run this from your project root:
+
+```bash
+#!/bin/bash
+# Sends a mix of GET / POST / PUT / DELETE + errors + slow requests
+# Covers: Request Rate, Error Rate, Latency p50/p95/p99, In-flight, Status breakdown
+
+IDS=()
+for round in $(seq 1 30); do
+  # Create orders
+  for item in "Widget-A" "Widget-B" "Gadget-X"; do
+    r=$(curl -s -X POST http://localhost:{{ config.app_port }}/orders \
+      -H "Content-Type: application/json" \
+      -d "{\"item\":\"$item\",\"qty\":$((RANDOM % 5 + 1))}")
+    id=$(echo "$r" | python3 -c "import sys,json; print(json.load(sys.stdin).get('id',''))" 2>/dev/null)
+    [ -n "$id" ] && IDS+=("$id")
+  done
+  # Read
+  curl -s http://localhost:{{ config.app_port }}/orders > /dev/null
+  for id in "${IDS[@]:0:3}"; do curl -s http://localhost:{{ config.app_port }}/orders/$id > /dev/null; done
+  # 4xx — unknown id
+  curl -s http://localhost:{{ config.app_port }}/orders/not-found > /dev/null
+  # 5xx — every 5 rounds (populates Error Rate panel)
+  (( round % 5 == 0 )) && curl -s http://localhost:{{ config.app_port }}/orders/error > /dev/null
+  # Slow endpoint — every 10 rounds (pushes p95/p99 latency up)
+  (( round % 10 == 0 )) && curl -s http://localhost:{{ config.app_port }}/orders/slow > /dev/null &
+  sleep 1
+done
+```
+
+What each panel needs:
+
+| Panel | What generates data |
+|-------|-------------------|
+| Request Rate | Any HTTP call to the app |
+| Error Rate | 4xx (unknown IDs) and 5xx (`/orders/error`) |
+| Latency p50/p95/p99 | Volume of requests — `/orders/slow` pushes the p99 up |
+| In-flight Requests | Concurrent calls (the `&` on slow endpoint) |
+| Responses by status | Mix of 200, 201, 404, 500 |
+
+{% endif %}
 ## Key design decisions
 
 - **`spring-boot-starter-opentelemetry`** — native SB4 starter, no Java agent.
