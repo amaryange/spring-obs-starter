@@ -218,7 +218,7 @@ class ProjectGenerator:
         ]
 
     # ------------------------------------------------------------------
-    # init-obs: shared observability stack
+    # shared observability stack (used by create-stack)
     # ------------------------------------------------------------------
 
     def generate_obs_stack(

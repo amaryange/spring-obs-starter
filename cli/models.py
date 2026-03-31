@@ -176,7 +176,7 @@ class ProjectConfig:
     # ------------------------------------------------------------------
 
     # ------------------------------------------------------------------
-    # Factory for obs-only stack (init-obs command)
+    # Factory for obs-only stack (used by create-stack)
     # ------------------------------------------------------------------
 
     @classmethod
@@ -185,7 +185,7 @@ class ProjectConfig:
         trace_backend: "TraceBackend",
         metrics_backend: "MetricsBackend",
     ) -> "ProjectConfig":
-        """Minimal config used by init-obs — only trace/metrics backend matter."""
+        """Minimal config for obs-only generation — only trace/metrics backend matter."""
         return cls(
             service_name="obs-stack",
             base_package="com.example",

@@ -61,7 +61,6 @@ def main(ctx: click.Context) -> None:
         console.print("  [bold]Commands:[/bold]")
         console.print("  [cyan]sbo create[/cyan] <service-name>        Generate a new project")
         console.print("  [cyan]sbo create-stack[/cyan] <stack-name>    Generate a multi-service stack")
-        console.print("  [cyan]sbo init-obs[/cyan]                     Generate shared obs stack")
         console.print()
         console.print("  Run [cyan]sbo <command> --help[/cyan] for details.")
         console.print()
@@ -131,7 +130,7 @@ def create(service_name: str, demo: bool) -> None:
                 DeploymentMode.STANDALONE,
             ),
             questionary.Choice(
-                "Multi-service — app only, shared obs stack (sbo init-obs)",
+                "Multi-service — app only, connects to a shared obs stack",
                 DeploymentMode.MULTI_SERVICE,
             ),
         ],
@@ -266,129 +265,6 @@ def create(service_name: str, demo: bool) -> None:
     )
     console.print()
 
-
-@main.command("init-obs")
-def init_obs() -> None:
-    """Generate a shared observability stack for multi-service setups.
-
-    Creates a standalone obs-stack/ directory with OTel Collector, metrics backend,
-    Loki, optional Tempo/Jaeger, and Grafana — all connected via obs-network.
-
-    Services generated with --deployment-mode multi-service connect to this stack.
-    """
-    console.print()
-    console.print(
-        Panel.fit(
-            "[bold cyan]spring-obs-starter[/bold cyan] — Shared Observability Stack",
-            subtitle="OTel Collector · Metrics · Loki · Grafana",
-        )
-    )
-    console.print()
-
-    trace_backend: TraceBackend = questionary.select(
-        "Trace backend?",
-        choices=[
-            questionary.Choice("Tempo (recommended)", TraceBackend.TEMPO),
-            questionary.Choice("Jaeger", TraceBackend.JAEGER),
-            questionary.Choice("Zipkin", TraceBackend.ZIPKIN),
-            questionary.Choice("Tempo + Jaeger", TraceBackend.TEMPO_JAEGER),
-        ],
-    ).ask()
-
-    metrics_backend: MetricsBackend = questionary.select(
-        "Metrics backend?",
-        choices=[
-            questionary.Choice("Prometheus (recommended)", MetricsBackend.PROMETHEUS),
-            questionary.Choice("Mimir (long-term storage, Prometheus-compatible)", MetricsBackend.MIMIR),
-        ],
-    ).ask()
-
-    output_name: str = questionary.text(
-        "Output directory?",
-        default="obs-stack",
-        validate=validate_output_dir,
-    ).ask()
-
-    output_dir = Path.cwd() / output_name
-
-    if output_dir.exists():
-        overwrite = questionary.confirm(
-            f"Directory '{output_name}' already exists. Overwrite?",
-            default=False,
-        ).ask()
-        if not overwrite:
-            console.print("[yellow]Aborted.[/yellow]")
-            raise SystemExit(0)
-
-    config = ProjectConfig.for_obs_stack(
-        trace_backend=trace_backend,
-        metrics_backend=metrics_backend,
-    )
-
-    generator = ProjectGenerator()
-
-    steps = [
-        "Generating OTel Collector config (traces / metrics / logs pipelines)...",
-        f"Configuring {'Prometheus' if config.use_prometheus else 'Mimir'} metrics backend...",
-        "Configuring Loki log backend...",
-    ]
-    if config.use_tempo:
-        steps.append("Configuring Tempo trace backend with span metrics...")
-    if config.use_jaeger:
-        steps.append("Configuring Jaeger trace backend...")
-    if config.use_zipkin:
-        steps.append("Configuring Zipkin trace backend...")
-    steps += [
-        "Provisioning Grafana dashboards (JVM, HTTP, Logs-Traces)...",
-        "Writing Docker Compose stack with obs-network...",
-    ]
-
-    console.print()
-    for step in steps:
-        with console.status(f"[cyan]{step}[/cyan]"):
-            pass
-        console.print(f"  [green]✔[/green] {step}")
-
-    generator.generate_obs_stack(config, output_dir)
-
-    console.print()
-    console.rule(style="green")
-
-    result = Text()
-    result.append(f"\n  ✅ Obs stack ready: ./{output_name}\n", style="bold green")
-    console.print(result)
-
-    console.rule(style="green")
-    console.print()
-
-    console.print("  [bold]Quick start:[/bold]")
-    console.print(f"  $ cd {output_name}")
-    console.print("  $ docker compose up -d")
-    console.print()
-
-    console.print("  [bold]Endpoints:[/bold]")
-    console.print("  Grafana    → [link]http://localhost:3000[/link]  (admin / admin)")
-    if config.use_prometheus:
-        console.print("  Prometheus → [link]http://localhost:9090[/link]")
-    else:
-        console.print("  Mimir      → [link]http://localhost:9009[/link]")
-    if config.use_tempo:
-        console.print("  Tempo      → [link]http://localhost:3200[/link]")
-    if config.use_jaeger:
-        console.print("  Jaeger     → [link]http://localhost:16686[/link]")
-    if config.use_zipkin:
-        console.print("  Zipkin     → [link]http://localhost:9411[/link]")
-    console.print("  OTel Col.  → [link]http://localhost:4318[/link]  (OTLP HTTP)")
-    console.print()
-
-    console.print("  [bold]Connect a service:[/bold]")
-    console.print("  $ sbo create my-service  [dim]# choose Multi-service mode[/dim]")
-    console.print()
-
-    console.print(
-        "  [dim]⚠  Change Grafana credentials before going to production.[/dim]"
-    )
-    console.print()
 
 
 def _validate_service_count(value: str) -> bool | str:
@@ -830,7 +706,7 @@ def _add_single(path: Path) -> None:
                 "Deployment mode?",
                 choices=[
                     questionary.Choice(
-                        "Multi-service — connects to shared obs-network (sbo init-obs)",
+                        "Multi-service — connects to a shared obs stack via obs-network",
                         DeploymentMode.MULTI_SERVICE,
                     ),
                     questionary.Choice(
@@ -918,8 +794,5 @@ def _add_single(path: Path) -> None:
     console.print(
         "  [dim]⚠  If management: already existed in application.yml, "
         "merge the appended block manually.[/dim]"
-    )
-    console.print(
-        "  [dim]ℹ  Run sbo init-obs to generate the shared observability stack.[/dim]"
     )
     console.print()
