@@ -2,7 +2,7 @@
 set -euo pipefail
 
 REPO="amaryange/spring-obs-starter"
-BINARY="sbo"
+BINARY="sos"
 INSTALL_DIR="/usr/local/bin"
 
 # ── Detect OS + arch ────────────────────────────────────────────────────────
@@ -44,7 +44,7 @@ DOWNLOAD_URL="https://github.com/$REPO/releases/download/$LATEST/$ASSET_NAME"
 
 # ── Download ─────────────────────────────────────────────────────────────────
 TMP=$(mktemp)
-echo "⬇️   Downloading sbo $LATEST ($PLATFORM/$ARCH_SUFFIX)..."
+echo "⬇️   Downloading sos $LATEST ($PLATFORM/$ARCH_SUFFIX)..."
 curl -fsSL "$DOWNLOAD_URL" -o "$TMP"
 chmod +x "$TMP"
 
@@ -58,6 +58,6 @@ fi
 
 # ── Verify ────────────────────────────────────────────────────────────────────
 echo ""
-echo "✅  sbo installed → $(which sbo)"
+echo "✅  sos installed → $(which sos)"
 echo ""
-sbo
+sos

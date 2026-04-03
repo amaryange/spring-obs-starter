@@ -9,7 +9,7 @@ services:
       - "{{ config.app_port }}:8080"
     environment:
       - SPRING_APPLICATION_NAME={{ config.artifact_id }}
-      # otel-collector is provided by the shared obs stack (sbo init-obs)
+      # otel-collector is provided by the shared obs stack (sos create-stack)
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
       - OTEL_SAMPLING_PROBABILITY=1.0
 {% if config.database.value == 'postgresql' %}

@@ -1,10 +1,10 @@
 <div align="center">
 
 ```
- ___  ___  ___
-/ __|| _ )||_ )   Spring Boot 4 + OTel
-\__ \| _ \ / /    Observability Starter
-|___/|___//___|
+ ___   ___   ___
+/ __| / _ \ / __|   Spring Boot 4 + OTel
+\__ \| (_) |\__ \   Observability Starter
+|___/ \___/ |___/
 ```
 
 **Traces · Metrics · Logs — correlated out of the box**
@@ -46,7 +46,7 @@ The `trace_id` is automatically injected into every log line — giving you dire
 | Java | 17 or 21 |
 | Docker + Docker Compose | v2+ |
 
-> `sbo` is a standalone binary — no Python, no pip, no JDK required to run the generator itself.
+> `sos` is a standalone binary — no Python, no pip, no JDK required to run the generator itself.
 
 ---
 
@@ -64,33 +64,33 @@ Download the binary for your platform from [GitHub Releases](https://github.com/
 
 | Platform | Binary |
 |----------|--------|
-| Linux x86_64 | `sbo-linux-x86_64` |
-| Linux arm64 | `sbo-linux-arm64` |
-| macOS x86_64 | `sbo-macos-x86_64` |
-| macOS arm64 (M1/M2/M3) | `sbo-macos-arm64` |
-| Windows x86_64 | `sbo-windows-x86_64.exe` |
+| Linux x86_64 | `sos-linux-x86_64` |
+| Linux arm64 | `sos-linux-arm64` |
+| macOS x86_64 | `sos-macos-x86_64` |
+| macOS arm64 (M1/M2/M3) | `sos-macos-arm64` |
+| Windows x86_64 | `sos-windows-x86_64.exe` |
 
 ```bash
-chmod +x sbo-linux-x86_64
-sudo mv sbo-linux-x86_64 /usr/local/bin/sbo
+chmod +x sos-linux-x86_64
+sudo mv sos-linux-x86_64 /usr/local/bin/sos
 ```
 
 Verify:
 
 ```bash
-sbo
+sos
 ```
 
 ---
 
 ### Commands
 
-#### `sbo create <service-name>`
+#### `sos create <service-name>`
 
 Generates a new Spring Boot 4 project from scratch.
 
 ```bash
-sbo create payment-service
+sos create payment-service
 ```
 
 Add `--demo` to include working example code (see [Demo mode](#demo-mode) below).
@@ -159,7 +159,7 @@ docker compose -f docker/docker-compose.yml up -d
 #### Demo mode
 
 ```bash
-sbo create payment-service --demo
+sos create payment-service --demo
 ```
 
 The `--demo` flag adds working example code to the generated project — useful to see how all the pieces fit together before writing your own business logic.
@@ -199,12 +199,12 @@ curl http://localhost:8080/api/v1/payment/settle/1
 
 ---
 
-#### `sbo create-stack <stack-name>`
+#### `sos create-stack <stack-name>`
 
 Generates a complete multi-service monorepo in one shot: a shared observability stack + N Spring Boot services, all wired together.
 
 ```bash
-sbo create-stack my-platform
+sos create-stack my-platform
 ```
 
 **Interactive questions:**
@@ -245,8 +245,8 @@ Services are assigned sequential ports starting from `8080`.
 
 For setups where multiple services share a single observability stack, you have two options:
 
-**Option A — `sbo create-stack`** *(recommended)*
-Generates everything in one shot. See [`sbo create-stack`](#sbo-create-stack-stack-name) above.
+**Option A — `sos create-stack`** *(recommended)*
+Generates everything in one shot. See [`sos create-stack`](#sos-create-stack-stack-name) above.
 
 **Option B — Download a pre-built obs stack + connect services manually**
 
@@ -265,8 +265,8 @@ tar xzf obs-stack-tempo-prometheus.tar.gz
 cd obs-stack && docker compose up -d
 
 # 2. Generate services (choose Multi-service mode)
-sbo create payment-service   # choose: Multi-service
-sbo create order-api         # choose: Multi-service
+sos create payment-service   # choose: Multi-service
+sos create order-api         # choose: Multi-service
 
 # 3. Start each service
 cd payment-service && docker compose -f docker/docker-compose.yml up -d
@@ -365,7 +365,7 @@ Le `trace_id` est automatiquement injecté dans chaque ligne de log — ce qui p
 | Java | 17 ou 21 |
 | Docker + Docker Compose | v2+ |
 
-> `sbo` est un binaire standalone — aucune dépendance Python, pip ou JDK requise pour le générateur.
+> `sos` est un binaire standalone — aucune dépendance Python, pip ou JDK requise pour le générateur.
 
 ---
 
@@ -383,33 +383,33 @@ Télécharger le binaire depuis [GitHub Releases](https://github.com/amaryange/s
 
 | Plateforme | Binaire |
 |------------|---------|
-| Linux x86_64 | `sbo-linux-x86_64` |
-| Linux arm64 | `sbo-linux-arm64` |
-| macOS x86_64 | `sbo-macos-x86_64` |
-| macOS arm64 (M1/M2/M3) | `sbo-macos-arm64` |
-| Windows x86_64 | `sbo-windows-x86_64.exe` |
+| Linux x86_64 | `sos-linux-x86_64` |
+| Linux arm64 | `sos-linux-arm64` |
+| macOS x86_64 | `sos-macos-x86_64` |
+| macOS arm64 (M1/M2/M3) | `sos-macos-arm64` |
+| Windows x86_64 | `sos-windows-x86_64.exe` |
 
 ```bash
-chmod +x sbo-linux-x86_64
-sudo mv sbo-linux-x86_64 /usr/local/bin/sbo
+chmod +x sos-linux-x86_64
+sudo mv sos-linux-x86_64 /usr/local/bin/sos
 ```
 
 Vérification :
 
 ```bash
-sbo
+sos
 ```
 
 ---
 
 ### Commandes
 
-#### `sbo create <nom-du-service>`
+#### `sos create <nom-du-service>`
 
 Génère un nouveau projet Spring Boot 4 de zéro.
 
 ```bash
-sbo create payment-service
+sos create payment-service
 ```
 
 Ajoutez `--demo` pour inclure du code d'exemple (voir [Mode demo](#mode-demo) ci-dessous).
@@ -451,7 +451,7 @@ docker compose -f docker/docker-compose.yml up -d
 #### Mode demo
 
 ```bash
-sbo create payment-service --demo
+sos create payment-service --demo
 ```
 
 Le flag `--demo` ajoute du code d'exemple fonctionnel au projet généré — idéal pour voir comment tout s'assemble avant d'écrire sa propre logique métier.
@@ -491,12 +491,12 @@ curl http://localhost:8080/api/v1/payment/settle/1
 
 ---
 
-#### `sbo create-stack <nom-du-stack>`
+#### `sos create-stack <nom-du-stack>`
 
 Génère un monorepo multi-services complet en une seule commande : une stack d'observabilité partagée + N services Spring Boot, tout câblé ensemble.
 
 ```bash
-sbo create-stack my-platform
+sos create-stack my-platform
 ```
 
 **Questions interactives :**
@@ -537,8 +537,8 @@ Les services se voient attribuer des ports séquentiels à partir de `8080`.
 
 Pour les setups où plusieurs services partagent une même stack d'observabilité, deux options :
 
-**Option A — `sbo create-stack`** *(recommandé)*
-Génère tout en une seule commande. Voir [`sbo create-stack`](#sbo-create-stack-nom-du-stack) ci-dessus.
+**Option A — `sos create-stack`** *(recommandé)*
+Génère tout en une seule commande. Voir [`sos create-stack`](#sos-create-stack-nom-du-stack) ci-dessus.
 
 **Option B — Télécharger une obs-stack prébuilt + connecter les services manuellement**
 
@@ -557,8 +557,8 @@ tar xzf obs-stack-tempo-prometheus.tar.gz
 cd obs-stack && docker compose up -d
 
 # 2. Générer les services (choisir le mode Multi-service)
-sbo create payment-service   # choisir : Multi-service
-sbo create order-api         # choisir : Multi-service
+sos create payment-service   # choisir : Multi-service
+sos create order-api         # choisir : Multi-service
 
 # 3. Démarrer chaque service
 cd payment-service && docker compose -f docker/docker-compose.yml up -d

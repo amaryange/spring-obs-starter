@@ -19,27 +19,27 @@ jobs:
           - os: linux
             arch: x86_64
             runner: ubuntu-22.04
-            asset: sbo-linux-x86_64
+            asset: sos-linux-x86_64
 
           - os: linux
             arch: arm64
             runner: ubuntu-22.04-arm
-            asset: sbo-linux-arm64
+            asset: sos-linux-arm64
 
           - os: macos
             arch: x86_64
             runner: macos-13
-            asset: sbo-macos-x86_64
+            asset: sos-macos-x86_64
 
           - os: macos
             arch: arm64
             runner: macos-14
-            asset: sbo-macos-arm64
+            asset: sos-macos-arm64
 
           - os: windows
             arch: x86_64
             runner: windows-2022
-            asset: sbo-windows-x86_64.exe
+            asset: sos-windows-x86_64.exe
 
     steps:
       - uses: actions/checkout@v4
@@ -57,17 +57,17 @@ jobs:
         run: >
           pyinstaller
           --onefile
-          --name sbo
+          --name sos
           --add-data "templates${{ matrix.os == 'windows' && ';' || ':' }}templates"
           cli/generate.py
 
       - name: Rename binary (Unix)
         if: matrix.os != 'windows'
-        run: mv dist/sbo dist/${{ matrix.asset }}
+        run: mv dist/sos dist/${{ matrix.asset }}
 
       - name: Rename binary (Windows)
         if: matrix.os == 'windows'
-        run: mv dist/sbo.exe dist/${{ matrix.asset }}
+        run: mv dist/sos.exe dist/${{ matrix.asset }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -111,7 +111,7 @@ jobs:
       - name: Download CLI artifacts
         uses: actions/download-artifact@v4
         with:
-          pattern: sbo-*
+          pattern: sos-*
           path: dist/cli/
           merge-multiple: true
 
@@ -125,7 +125,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
-          name: "sbo ${{ github.ref_name }}"
+          name: "sos ${{ github.ref_name }}"
           body: |
             ## Install the CLI
 

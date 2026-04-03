@@ -1,5 +1,5 @@
 """
-Non-destructive patching utilities for sbo add.
+Non-destructive patching utilities for sos add.
 Each function returns a description of what was done (or skipped).
 """
 from pathlib import Path
@@ -121,7 +121,7 @@ def patch_build_file(project_path: Path, build_tool: BuildTool) -> list[str]:
 
 _OTEL_YML_BLOCK = """\
 
-# --- OpenTelemetry (added by sbo add) ---
+# --- OpenTelemetry (added by sos add) ---
 # ⚠  If a 'management:' key already exists above, merge these nested keys into it.
 management:
   endpoints:

@@ -1,5 +1,5 @@
 """
-Project detection utilities for sbo add.
+Project detection utilities for sos add.
 All functions are pure (read-only) and return None / sensible defaults on failure.
 """
 import re
@@ -134,7 +134,7 @@ def detect_database(project_path: Path, build_tool: BuildTool) -> "Database":
 def discover_projects(directory: Path) -> list[Path]:
     """
     Return all immediate subdirectories that look like Spring Boot projects.
-    Used for monorepo layouts: sbo add services/ discovers services/*/pom.xml.
+    Used for monorepo layouts: sos add services/ discovers services/*/pom.xml.
     """
     found: list[Path] = []
     try:
