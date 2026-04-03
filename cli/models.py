@@ -1,6 +1,8 @@
 from dataclasses import dataclass, field
 from enum import Enum
 
+SPRING_BOOT_VERSION = "4.0.3"
+
 
 class JavaVersion(str, Enum):
     V17 = "17"
@@ -60,7 +62,7 @@ class ProjectConfig:
     build_tool: BuildTool = BuildTool.MAVEN
     metrics_backend: MetricsBackend = MetricsBackend.PROMETHEUS
     deployment_mode: DeploymentMode = DeploymentMode.STANDALONE
-    spring_boot_version: str = "4.0.3"
+    spring_boot_version: str = SPRING_BOOT_VERSION
     demo: bool = False
     app_port: int = 8080
 

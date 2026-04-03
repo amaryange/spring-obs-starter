@@ -1,3 +1,4 @@
+from importlib.metadata import version as pkg_version, PackageNotFoundError
 from pathlib import Path
 
 import click
@@ -6,8 +7,15 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
 
+def _get_version() -> str:
+    try:
+        return pkg_version("spring-obs-starter")
+    except PackageNotFoundError:
+        return "dev"
+
 from cli.generator import ProjectGenerator
 from cli.models import (
+    SPRING_BOOT_VERSION,
     BuildTool,
     Database,
     DeploymentMode,
@@ -39,10 +47,10 @@ console = Console()
 _BANNER = """
 [bold cyan]┌─────────────────────────────────────────────────────────────────┐[/bold cyan]
 [bold cyan]│[/bold cyan]                                                                 [bold cyan]│[/bold cyan]
-[bold cyan]│[/bold cyan]   [bold white] ___  ___  ___[/bold white]                                                [bold cyan]│[/bold cyan]
-[bold cyan]│[/bold cyan]   [bold white]/ __|| _ )||_ )[/bold white]   [bold white]Spring Boot 4 + OTel[/bold white]                        [bold cyan]│[/bold cyan]
-[bold cyan]│[/bold cyan]   [bold white]\__ \| _ \ / /[/bold white]    [green]Observability Starter[/green]                       [bold cyan]│[/bold cyan]
-[bold cyan]│[/bold cyan]   [bold white]|___/|___//___|[/bold white]                                               [bold cyan]│[/bold cyan]
+[bold cyan]│[/bold cyan]   [bold white] ___   ___   ___ [/bold white]                                             [bold cyan]│[/bold cyan]
+[bold cyan]│[/bold cyan]   [bold white]/ __| / _ \ / __|[/bold white]   [bold white]Spring Boot 4 + OTel[/bold white]                      [bold cyan]│[/bold cyan]
+[bold cyan]│[/bold cyan]   [bold white]\__ \| (_) |\__ \[/bold white]   [green]Observability Starter[/green]                     [bold cyan]│[/bold cyan]
+[bold cyan]│[/bold cyan]   [bold white]|___/ \___/ |___/[/bold white]                                             [bold cyan]│[/bold cyan]
 [bold cyan]│[/bold cyan]                                                                 [bold cyan]│[/bold cyan]
 [bold cyan]│[/bold cyan]   [dim]Traces · Metrics · Logs — correlated out of the box[/dim]           [bold cyan]│[/bold cyan]
 [bold cyan]│[/bold cyan]                                                                 [bold cyan]│[/bold cyan]
@@ -53,16 +61,21 @@ _BANNER = """
 
 
 @click.group(invoke_without_command=True)
+@click.version_option(
+    version=_get_version(),
+    prog_name="sos",
+    message=f"%(prog)s %(version)s (Spring Boot {SPRING_BOOT_VERSION})",
+)
 @click.pass_context
 def main(ctx: click.Context) -> None:
     """spring-obs-starter — Spring Boot 4 + OTel observability generator."""
     if ctx.invoked_subcommand is None:
         console.print(_BANNER)
         console.print("  [bold]Commands:[/bold]")
-        console.print("  [cyan]sbo create[/cyan] <service-name>        Generate a new project")
-        console.print("  [cyan]sbo create-stack[/cyan] <stack-name>    Generate a multi-service stack")
+        console.print("  [cyan]sos create[/cyan] <service-name>        Generate a new project")
+        console.print("  [cyan]sos create-stack[/cyan] <stack-name>    Generate a multi-service stack")
         console.print()
-        console.print("  Run [cyan]sbo <command> --help[/cyan] for details.")
+        console.print("  Run [cyan]sos <command> --help[/cyan] for details.")
         console.print()
     else:
         console.print(_BANNER)
@@ -518,8 +531,8 @@ def add(project_paths: tuple[str, ...]) -> None:
     Non-destructive: skips files that already exist or are already configured.
 
     Examples:
-      sbo add .
-      sbo add service-a/ service-b/ service-c/
+      sos add .
+      sos add service-a/ service-b/ service-c/
     """
     raw_paths = [Path(p).resolve() for p in project_paths] if project_paths else [Path.cwd()]
 
