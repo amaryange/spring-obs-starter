@@ -9,9 +9,28 @@ permissions:
   contents: write
 
 jobs:
+  # ── 0. Tests ─────────────────────────────────────────────────────────────────
+  test:
+    name: Run tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -e ".[dev]"
+
+      - name: Run tests
+        run: pytest --tb=short
+
   # ── 1. CLI binaries (cross-platform) ────────────────────────────────────────
   build-cli:
     name: Build CLI — ${{ matrix.os }} / ${{ matrix.arch }}
+    needs: [test]
     runs-on: ${{ matrix.runner }}
     strategy:
       matrix:
@@ -78,6 +97,7 @@ jobs:
   # ── 2. Pre-built obs-stack archives ─────────────────────────────────────────
   build-obs-stacks:
     name: Build obs-stack archives
+    needs: [test]
     runs-on: ubuntu-latest
 
     steps:
