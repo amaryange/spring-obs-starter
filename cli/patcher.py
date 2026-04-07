@@ -2,6 +2,7 @@
 Non-destructive patching utilities for sos add.
 Each function returns a description of what was done (or skipped).
 """
+import re
 from pathlib import Path
 
 from cli.models import BuildTool
@@ -35,24 +36,31 @@ def patch_pom_xml(pom_path: Path) -> list[str]:
     content = pom_path.read_text(encoding="utf-8")
     added: list[str] = []
 
+    # Detect indentation from existing <dependency> blocks (2 or 4 spaces, or tabs)
+    indent_m = re.search(r"^(\s+)<dependency>", content, re.MULTILINE)
+    dep_indent = indent_m.group(1) if indent_m else "        "
+    inner_indent = dep_indent + "    "
+
     for dep in OTEL_DEPS_MAVEN:
         if dep["artifactId"] in content:
             continue
         lines = [
-            "        <dependency>",
-            f"            <groupId>{dep['groupId']}</groupId>",
-            f"            <artifactId>{dep['artifactId']}</artifactId>",
+            f"{dep_indent}<dependency>",
+            f"{inner_indent}<groupId>{dep['groupId']}</groupId>",
+            f"{inner_indent}<artifactId>{dep['artifactId']}</artifactId>",
         ]
         if "version" in dep:
-            lines.append(f"            <version>{dep['version']}</version>")
-        lines.append("        </dependency>")
+            lines.append(f"{inner_indent}<version>{dep['version']}</version>")
+        lines.append(f"{dep_indent}</dependency>")
         snippet = "\n".join(lines) + "\n"
 
-        # rfind: the LAST </dependencies> is the main block (after dependencyManagement)
-        idx = content.rfind("    </dependencies>")
-        if idx == -1:
+        # Find the LAST </dependencies> closing tag (main block, after dependencyManagement)
+        m = None
+        for m in re.finditer(r"^\s*</dependencies>", content, re.MULTILINE):
+            pass
+        if m is None:
             continue
-        content = content[:idx] + snippet + content[idx:]
+        content = content[:m.start()] + snippet + content[m.start():]
         added.append(dep["artifactId"])
 
     if added:
@@ -96,7 +104,8 @@ def patch_gradle_kotlin(build_path: Path) -> list[str]:
     added: list[str] = []
 
     for dep in OTEL_DEPS_GRADLE_KOTLIN:
-        artifact = dep.split(":")[1].strip('"')
+        m = re.search(r":([a-zA-Z0-9\-._]+)", dep)
+        artifact = m.group(1) if m else dep
         if artifact in content:
             continue
         content = _insert_into_dependencies_block(content, f"    {dep}")
@@ -119,11 +128,8 @@ def patch_build_file(project_path: Path, build_tool: BuildTool) -> list[str]:
 # application.yml
 # ---------------------------------------------------------------------------
 
-_OTEL_YML_BLOCK = """\
-
-# --- OpenTelemetry (added by sos add) ---
-# ⚠  If a 'management:' key already exists above, merge these nested keys into it.
-management:
+# OTel properties nested under management:
+_OTEL_MANAGEMENT_NESTED = """\
   endpoints:
     web:
       exposure:
@@ -154,16 +160,31 @@ management:
           endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4318}/v1/logs
 """
 
+_OTEL_YML_BLOCK = "\n# --- OpenTelemetry (added by sos add) ---\nmanagement:\n" + _OTEL_MANAGEMENT_NESTED
+
 
 def patch_application_yml(yml_path: Path) -> str:
     """
     Appends OTel configuration to application.yml.
+    If a top-level 'management:' key already exists, merges nested keys into it.
     Returns 'patched', 'skipped' (already configured), or 'created'.
     """
     if yml_path.exists():
         content = yml_path.read_text(encoding="utf-8")
         if "otlp" in content.lower() or "opentelemetry" in content.lower():
             return "skipped"
+
+        # Check if a top-level management: key already exists
+        if re.search(r"^management\s*:", content, re.MULTILINE):
+            # Find the end of the management: block (next top-level key or EOF)
+            m = re.search(r"^management\s*:.*?(?=\n\S|\Z)", content, re.MULTILINE | re.DOTALL)
+            if m:
+                insert_pos = m.end()
+                nested = "\n# --- OpenTelemetry (added by sos add) ---\n" + _OTEL_MANAGEMENT_NESTED
+                content = content[:insert_pos] + nested + content[insert_pos:]
+                yml_path.write_text(content, encoding="utf-8")
+                return "patched"
+
         yml_path.write_text(content.rstrip("\n") + _OTEL_YML_BLOCK, encoding="utf-8")
         return "patched"
     else:

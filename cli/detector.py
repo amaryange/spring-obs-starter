@@ -38,20 +38,24 @@ def detect_service_name(project_path: Path, build_tool: BuildTool) -> str:
 
 
 def detect_java_version(project_path: Path, build_tool: BuildTool) -> JavaVersion:
+    _VERSION_MAP = {v.value: v for v in JavaVersion}
+
+    def _resolve(version_str: str) -> JavaVersion:
+        return _VERSION_MAP.get(version_str, JavaVersion.V21)
+
     try:
         if build_tool == BuildTool.MAVEN:
             content = (project_path / "pom.xml").read_text(encoding="utf-8")
             for pattern in [r"<java\.version>(\d+)", r"<maven\.compiler\.source>(\d+)"]:
                 m = re.search(pattern, content)
                 if m:
-                    return JavaVersion.V17 if m.group(1) == "17" else JavaVersion.V21
+                    return _resolve(m.group(1))
         else:
-            fname = "build.gradle.kts"
-            content = (project_path / fname).read_text(encoding="utf-8")
+            content = (project_path / "build.gradle.kts").read_text(encoding="utf-8")
             for pattern in [r"VERSION_(\d+)", r"sourceCompatibility\s*=\s*[\"']?(\d+)"]:
                 m = re.search(pattern, content)
                 if m:
-                    return JavaVersion.V17 if m.group(1) == "17" else JavaVersion.V21
+                    return _resolve(m.group(1))
     except OSError:
         pass
     return JavaVersion.V21
