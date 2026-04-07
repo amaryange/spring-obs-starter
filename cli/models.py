@@ -3,10 +3,18 @@ from enum import Enum
 
 SPRING_BOOT_VERSION = "4.0.3"
 
+SUPPORTED_SPRING_BOOT_VERSIONS = [
+    "4.0.3",  # latest
+    "4.0.2",
+    "4.0.1",
+    "4.0.0",
+]
+
 
 class JavaVersion(str, Enum):
     V17 = "17"
     V21 = "21"
+    V25 = "25"
 
 
 class TraceBackend(str, Enum):

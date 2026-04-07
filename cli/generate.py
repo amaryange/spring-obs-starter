@@ -16,6 +16,7 @@ def _get_version() -> str:
 from cli.generator import ProjectGenerator
 from cli.models import (
     SPRING_BOOT_VERSION,
+    SUPPORTED_SPRING_BOOT_VERSIONS,
     BuildTool,
     Database,
     DeploymentMode,
@@ -109,6 +110,17 @@ def create(service_name: str, demo: bool) -> None:
     # Interactive questions
     # ------------------------------------------------------------------
 
+    spring_boot_version: str = questionary.select(
+        "Spring Boot version?",
+        choices=[
+            questionary.Choice(
+                f"{v}{' (latest)' if v == SUPPORTED_SPRING_BOOT_VERSIONS[0] else ''}",
+                v,
+            )
+            for v in SUPPORTED_SPRING_BOOT_VERSIONS
+        ],
+    ).ask()
+
     build_tool: BuildTool = questionary.select(
         "Build tool?",
         choices=[
@@ -121,6 +133,7 @@ def create(service_name: str, demo: bool) -> None:
         "Java version?",
         choices=[
             questionary.Choice("21 LTS (recommended)", JavaVersion.V21),
+            questionary.Choice("25 (latest)", JavaVersion.V25),
             questionary.Choice("17 LTS", JavaVersion.V17),
         ],
     ).ask()
@@ -193,6 +206,7 @@ def create(service_name: str, demo: bool) -> None:
         build_tool=build_tool,
         metrics_backend=metrics_backend,
         deployment_mode=deployment_mode,
+        spring_boot_version=spring_boot_version,
         demo=demo,
     )
 
@@ -330,6 +344,17 @@ def create_stack(stack_name: str, demo: bool) -> None:
     # Step 1: shared obs config (asked once)
     # ------------------------------------------------------------------
 
+    spring_boot_version: str = questionary.select(
+        "Spring Boot version? (shared across all services)",
+        choices=[
+            questionary.Choice(
+                f"{v}{' (latest)' if v == SUPPORTED_SPRING_BOOT_VERSIONS[0] else ''}",
+                v,
+            )
+            for v in SUPPORTED_SPRING_BOOT_VERSIONS
+        ],
+    ).ask()
+
     trace_backend: TraceBackend = questionary.select(
         "Trace backend? (shared across all services)",
         choices=[
@@ -386,6 +411,7 @@ def create_stack(stack_name: str, demo: bool) -> None:
             "Java version?",
             choices=[
                 questionary.Choice("21 LTS (recommended)", JavaVersion.V21),
+                questionary.Choice("25 (latest)", JavaVersion.V25),
                 questionary.Choice("17 LTS", JavaVersion.V17),
             ],
         ).ask()
@@ -420,6 +446,7 @@ def create_stack(stack_name: str, demo: bool) -> None:
             build_tool=build_tool,
             metrics_backend=metrics_backend,
             deployment_mode=DeploymentMode.MULTI_SERVICE,
+            spring_boot_version=spring_boot_version,
             demo=demo,
             app_port=app_port,
         ))
