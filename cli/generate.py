@@ -45,7 +45,7 @@ from cli.validators import validate_package, validate_service_name, validate_out
 console = Console()
 
 
-_BANNER = """
+_BANNER = r"""
 [bold cyan]┌─────────────────────────────────────────────────────────────────┐[/bold cyan]
 [bold cyan]│[/bold cyan]                                                                 [bold cyan]│[/bold cyan]
 [bold cyan]│[/bold cyan]   [bold white] ___   ___   ___ [/bold white]                                             [bold cyan]│[/bold cyan]
