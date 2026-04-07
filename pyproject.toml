@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "spring-obs-starter"
-version = "1.0.0"
+version = "1.0.5"
 description = "One-command generator for Spring Boot 4 projects with production-ready OTel observability"
 requires-python = ">=3.11"
 license = { text = "MIT" }
