@@ -1,13 +1,14 @@
 from dataclasses import dataclass, field
 from enum import Enum
 
-SPRING_BOOT_VERSION = "4.0.3"
+SPRING_BOOT_VERSION = "4.0.5"
 
 SUPPORTED_SPRING_BOOT_VERSIONS = [
-    "4.0.3",  # latest
+    "4.0.5",  # latest
+    "4.0.4",
+    "4.0.3",
     "4.0.2",
     "4.0.1",
-    "4.0.0",
 ]
 
 
