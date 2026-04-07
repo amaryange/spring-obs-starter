@@ -184,24 +184,28 @@ spring-obs-starter/
 
 ## 📋 Comportement du CLI
 
-### Commande principale
+### Commandes
 ```bash
-sb-obs create <service-name>
+sos create <service-name>           # nouveau projet solo
+sos create-stack <stack-name>       # stack multi-services (obs partagée + N services)
+sos --version                       # affiche la version CLI + Spring Boot embarqué
 ```
 
-### Questions posées dans l'ordre
+### Questions posées dans l'ordre (`sos create`)
 ```
-1. Spring Boot version     → [4.0.x] (fixé en v1.0 — pas de choix)
-2. Java version            → [17 | 21 (recommandé)]
-3. Backend de traces       → [Tempo | Jaeger | Zipkin | Tempo + Jaeger]
-4. Environnement cible     → [Docker Compose | Kubernetes/K3s | Les deux]
-5. Extras (multi-select)   → [PostgreSQL + Flyway | JWT skeleton | Kafka | Spring Security]
-6. Package de base         → (input libre, ex: com.monentreprise.payment)
+1. Spring Boot version  → [4.0.5 (latest) | 4.0.4 | 4.0.3 | 4.0.2 | 4.0.1]
+2. Build tool           → [Maven (recommandé) | Gradle — Kotlin DSL]
+3. Java version         → [21 LTS (recommandé) | 25 (latest) | 17 LTS]
+4. Backend de traces    → [Tempo | Jaeger | Zipkin | Tempo + Jaeger]
+5. Deployment mode      → [Standalone | Multi-service]
+6. Metrics backend      → [Prometheus (recommandé) | Mimir]  ← si Standalone
+7. Database             → [None | PostgreSQL | MySQL | Oracle | H2]
+8. Package de base      → (input libre, ex: com.monentreprise.payment)
 ```
 
 ### Output attendu
 ```
-✔ Generating Spring Boot 4.0.1 project...
+✔ Generating Spring Boot 4.0.5 project...
 ✔ Configuring OpenTelemetry native starter...
 ✔ Setting up OTel Collector pipelines (traces → Tempo, metrics → Prometheus, logs → Loki)...
 ✔ Wiring Logback OTel Appender for log correlation...
@@ -229,13 +233,28 @@ sb-obs create <service-name>
 
 ## 🔄 Stratégie de versioning
 
-| Tag Git         | Spring Boot | Statut          |
-|-----------------|-------------|-----------------|
-| `v1.0.x`        | 4.0.x       | **Actif**       |
-| `v1.1.x`        | 4.1.x       | À venir         |
-| `v2.0.x`        | 5.0.x       | Futur           |
+### Branches
+```
+main              → documentation, README global
+develop           → travail en cours
+release/4.0       → ligne Spring Boot 4.0.x  ← actuelle
+release/4.1       → ligne Spring Boot 4.1.x  (future)
+```
 
-> Support Spring Boot 3.x (3.3, 3.4) : envisageable dans une version ultérieure selon la demande communautaire. Pas dans le scope v1.0.
+### Tags (releases GitHub)
+| Branche          | Tag       | Spring Boot | Statut      |
+|------------------|-----------|-------------|-------------|
+| `release/4.0`    | `v1.0.5`  | 4.0.5       | **Actif**   |
+| `release/4.1`    | `v1.1.0`  | 4.1.0       | À venir     |
+| `release/5.0`    | `v2.0.0`  | 5.0.0       | Futur       |
+
+**Workflow lors d'une nouvelle version Spring Boot :**
+1. Nouvelle GA Spring Boot 4.0.x → on travaille sur `release/4.0`
+2. On met à jour `SPRING_BOOT_VERSION` + `SUPPORTED_SPRING_BOOT_VERSIONS` dans `models.py`
+3. On bumpe la version dans `pyproject.toml`
+4. On tag → release GitHub + binaire automatiquement via CI
+
+> Support Spring Boot 3.x : hors scope v1.0.
 
 - Une **nouvelle version mineure** à chaque nouvelle version mineure de Spring Boot.
 - Une **nouvelle version majeure** à chaque nouvelle version majeure de Spring Boot.
