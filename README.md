@@ -45,7 +45,7 @@ The `trace_id` is automatically injected into every log line — giving you dire
 
 | Tool | Version |
 |------|---------|
-| Java | 17 or 21 |
+| Java | 17, 21 or 25 |
 | Docker + Docker Compose | v2+ |
 
 > `sos` is a standalone binary — no Python, no pip, no JDK required to run the generator itself.
@@ -102,7 +102,7 @@ Add `--demo` to include working example code (see [Demo mode](#demo-mode) below)
 | Question | Options |
 |----------|---------|
 | Build tool | Maven *(recommended)*, Gradle Kotlin DSL |
-| Java version | 21 LTS *(recommended)*, 17 LTS |
+| Java version | 21 LTS *(recommended)*, 25 (latest), 17 LTS |
 | Trace backend | Tempo *(recommended)*, Jaeger, Zipkin, Tempo + Jaeger |
 | Deployment mode | Standalone, Multi-service |
 | Metrics backend | Prometheus *(recommended)*, Mimir |
@@ -214,7 +214,7 @@ sos create-stack my-platform
 | Question | Options |
 |----------|---------|
 | Build tool | Maven *(recommended)*, Gradle Kotlin DSL |
-| Java version | 21 LTS *(recommended)*, 17 LTS |
+| Java version | 21 LTS *(recommended)*, 25 (latest), 17 LTS |
 | Trace backend | Tempo *(recommended)*, Jaeger, Zipkin, Tempo + Jaeger |
 | Metrics backend | Prometheus *(recommended)*, Mimir |
 | Number of services | 1–20 |
