@@ -55,8 +55,6 @@ _BANNER = r"""
 [bold cyan]│[/bold cyan]                                                                 [bold cyan]│[/bold cyan]
 [bold cyan]│[/bold cyan]   [dim]Traces · Metrics · Logs — correlated out of the box[/dim]           [bold cyan]│[/bold cyan]
 [bold cyan]│[/bold cyan]                                                                 [bold cyan]│[/bold cyan]
-[bold cyan]│[/bold cyan]   [bold]Author :[/bold] [cyan]amaryange[/cyan]           [bold]Web :[/bold] [link=https://amarycode.dev]amarycode.dev[/link]              [bold cyan]│[/bold cyan]
-[bold cyan]│[/bold cyan]                                                                 [bold cyan]│[/bold cyan]
 [bold cyan]└─────────────────────────────────────────────────────────────────┘[/bold cyan]
 """
 

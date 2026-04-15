@@ -4,6 +4,7 @@
   .env
   CLAUDE.md
   TEST.md
+  docs/
   .venv/
   dist/
   *.egg-info/
