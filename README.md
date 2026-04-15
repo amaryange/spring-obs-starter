@@ -1,11 +1,14 @@
 <div align="center">
 
 ```
- ___   ___   ___
-/ __| / _ \ / __|   Spring Boot 4 + OTel
-\__ \| (_) |\__ \   Observability Starter
-|___/ \___/ |___/
+ ____   ___  ____
+/ ___| / _ \/ ___|
+\___ \| | | \___ \
+ ___) | |_| |___) |
+|____/ \___/|____/
 ```
+
+**Spring Boot 4 + OTel Observability Starter**
 
 **Traces · Metrics · Logs — correlated out of the box**
 
@@ -15,7 +18,6 @@
 
 [🇬🇧 English](#-english) · [🇫🇷 Français](#-français)
 
-**Author:** [amaryange](https://github.com/amaryange) · **Website:** [amarycode.dev](https://amarycode.dev)
 
 </div>
 
